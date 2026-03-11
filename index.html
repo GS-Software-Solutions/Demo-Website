@@ -1034,7 +1034,7 @@ function applyLanguage(code) {
 // ─────────────────────────────────────────
 const CONFIG = {
   apiKey:    'ct-9c0cceda-4e0c-45bf-8e3c-ccd1e9bb2178',
-  endpoint:  'http://localhost:3001',
+  endpoint:  window.location.hostname === 'localhost' ? 'http://localhost:3001' : '/api/proxy',
   origin:         'kizzle.net',
   minLength:      100,
   sourceLanguage: 'de',
