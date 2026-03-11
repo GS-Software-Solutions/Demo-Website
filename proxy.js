@@ -1,7 +1,8 @@
 const http = require('http');
 const https = require('https');
 
-const API_TARGET = 'https://api.sexytalk.io/chatcompletion';
+const API_TARGET = 'https://api.sexytalk.io/inference';
+const API_KEY = 'ct-9c0cceda-4e0c-45bf-8e3c-ccd1e9bb2178';
 const PORT = 3001;
 
 http.createServer((req, res) => {
@@ -10,7 +11,7 @@ http.createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-api-key');
 
   if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
-  if (req.method !== 'POST')    { res.writeHead(405); res.end(); return; }
+  if (req.method !== 'POST') { res.writeHead(405); res.end(); return; }
 
   let body = '';
   req.on('data', chunk => body += chunk);
@@ -22,16 +23,17 @@ http.createServer((req, res) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': req.headers['x-api-key'] || '',
+        'x-api-key': API_KEY,
         'Content-Length': Buffer.byteLength(body),
       },
     };
 
     const proxy = https.request(options, apiRes => {
-      let data = '';
-      apiRes.on('data', chunk => data += chunk);
+      const chunks = [];
+      apiRes.on('data', chunk => chunks.push(chunk));
       apiRes.on('end', () => {
-        res.writeHead(apiRes.statusCode, { 'Content-Type': 'application/json' });
+        const data = Buffer.concat(chunks).toString('utf8');
+        res.writeHead(apiRes.statusCode, { 'Content-Type': 'application/json; charset=utf-8' });
         res.end(data);
       });
     });
