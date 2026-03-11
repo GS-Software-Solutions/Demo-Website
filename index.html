@@ -1,0 +1,1428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat Moderation</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #080808;
+      --surface: #111111;
+      --surface2: #1a1a1a;
+      --border: #222222;
+      --accent: #ff2d6e;
+      --accent-glow: rgba(255, 45, 110, 0.2);
+      --text: #f0f0f0;
+      --text-muted: #555555;
+      --radius: 14px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── TOP BAR ── */
+    .topbar {
+      height: 48px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .topbar-logo { font-size: 14px; font-weight: 700; color: var(--accent); letter-spacing: .04em; }
+    .topbar-logo span { color: var(--text-muted); font-weight: 400; }
+    .topbar-divider { flex: 1; }
+    .status-pill { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); }
+    .status-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--accent); box-shadow: 0 0 8px var(--accent-glow);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+    .lang-wrap { display:flex; align-items:center; gap:8px; }
+    .lang-label { font-size:12px; color:var(--text-muted); }
+    #langSelect {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 13px;
+      padding: 5px 10px;
+      outline: none;
+      cursor: pointer;
+      transition: border-color .2s;
+    }
+    #langSelect:hover { border-color: #444; }
+    #langSelect:focus { border-color: var(--accent); }
+    #minLengthInput {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 13px;
+      padding: 5px 10px;
+      outline: none;
+      width: 70px;
+      transition: border-color .2s;
+    }
+    #minLengthInput:hover { border-color: #444; }
+    #minLengthInput:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
+    .lightbox {
+      display: none; position: fixed; inset: 0; z-index: 100;
+      background: rgba(0,0,0,.85); align-items: center; justify-content: center;
+      cursor: zoom-out;
+    }
+    .lightbox.show { display: flex; }
+    .lightbox img {
+      max-width: 90vw; max-height: 90vh;
+      border-radius: 12px; object-fit: contain;
+      box-shadow: 0 0 60px rgba(0,0,0,.8);
+      animation: zoomIn .18s ease;
+    }
+    @keyframes zoomIn { from{transform:scale(.85);opacity:0} to{transform:scale(1);opacity:1} }
+    .gallery-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px;
+    }
+    .gallery-grid img {
+      width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px;
+      cursor: pointer; transition: opacity .15s;
+      border: 1px solid var(--border);
+    }
+    .gallery-grid img:hover { opacity: .8; }
+    .dating-toggle {
+      display: flex; align-items: center; gap: 8px;
+      cursor: pointer; user-select: none; margin-top: 4px;
+    }
+    .dating-toggle input { display: none; }
+    .toggle-track {
+      width: 34px; height: 18px; border-radius: 9px;
+      background: var(--border); flex-shrink: 0;
+      position: relative; transition: background .2s;
+    }
+    .dating-toggle input:checked + .toggle-track { background: var(--accent); box-shadow: 0 0 8px var(--accent-glow); }
+    .toggle-thumb {
+      position: absolute; top: 2px; left: 2px;
+      width: 14px; height: 14px; border-radius: 50%;
+      background: #fff; transition: transform .2s;
+    }
+    .dating-toggle input:checked + .toggle-track .toggle-thumb { transform: translateX(16px); }
+    .toggle-label { font-size: 11px; color: var(--text-muted); }
+    .dating-toggle input:checked ~ .toggle-label { color: var(--accent); }
+    #extraInfoInput {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 13px;
+      padding: 5px 10px;
+      outline: none;
+      width: 160px;
+      transition: border-color .2s;
+    }
+    #extraInfoInput::placeholder { color: var(--text-muted); }
+    #extraInfoInput:hover { border-color: #444; }
+    #extraInfoInput:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
+
+    /* ── WORKSPACE ── */
+    .workspace { flex: 1; display: flex; overflow: hidden; }
+
+    /* ── PROFILE PANELS ── */
+    .profile-panel {
+      width: 270px; flex-shrink: 0;
+      background: var(--surface);
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .profile-panel.left  { border-right: 1px solid var(--border); }
+    .profile-panel.right { border-left:  1px solid var(--border); }
+
+    .profile-scroll {
+      flex: 1; overflow-y: auto;
+      padding: 18px 14px;
+      display: flex; flex-direction: column; gap: 14px;
+    }
+    .profile-scroll::-webkit-scrollbar { width: 3px; }
+    .profile-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* Hero */
+    .profile-hero {
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      padding-bottom: 14px; border-bottom: 1px solid var(--border);
+    }
+    .pic-wrap { position: relative; width: 90px; height: 90px; }
+    .pic-ring {
+      width: 90px; height: 90px; border-radius: 50%;
+      background: var(--surface2); border: 2px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px; overflow: hidden; cursor: pointer;
+      transition: border-color .2s;
+    }
+    .pic-ring:hover { border-color: var(--accent); }
+    .pic-ring img { width: 100%; height: 100%; object-fit: cover; object-position: top center; border-radius: 50%; }
+    .pic-overlay {
+      position: absolute; inset: 0; border-radius: 50%;
+      background: rgba(0,0,0,.55);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; color: #fff; opacity: 0;
+      transition: opacity .15s; cursor: pointer;
+    }
+    .pic-wrap:hover .pic-overlay { opacity: 1; }
+    .online-badge {
+      position: absolute; bottom: 3px; right: 3px;
+      width: 14px; height: 14px; border-radius: 50%;
+      background: var(--accent); border: 2px solid var(--surface);
+      box-shadow: 0 0 8px var(--accent-glow);
+    }
+
+    /* Editable name/username in hero */
+    [contenteditable] {
+      outline: none;
+      border-radius: 4px;
+      transition: background .15s, box-shadow .15s;
+      cursor: text;
+    }
+    [contenteditable]:hover  { background: rgba(255,255,255,.04); }
+    [contenteditable]:focus  { background: rgba(255,45,110,.08); box-shadow: 0 0 0 1px rgba(255,45,110,.35); }
+
+    .edit-name {
+      font-size: 16px; font-weight: 700; text-align: center;
+      padding: 2px 6px; min-width: 60px;
+    }
+    .edit-username {
+      font-size: 12px; color: var(--text-muted); text-align: center;
+      padding: 1px 5px; min-width: 40px;
+    }
+
+    /* Tags row */
+    .tags-row { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; }
+    .tag {
+      font-size: 11px; padding: 3px 8px; border-radius: 20px;
+      background: var(--surface2); border: 1px solid var(--border); color: var(--text-muted);
+      min-width: 20px;
+    }
+    .tag.pink { background: rgba(255,45,110,.1); border-color: rgba(255,45,110,.3); color: var(--accent); }
+
+    /* Info section */
+    .info-section { display: flex; flex-direction: column; gap: 4px; }
+    .section-label {
+      font-size: 10px; font-weight: 700;
+      letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+    .info-row {
+      display: grid; grid-template-columns: 80px 1fr;
+      gap: 6px; align-items: start; font-size: 12px; line-height: 1.5;
+    }
+    .info-row .k { color: var(--text-muted); padding-top: 2px; }
+    .info-row .v {
+      color: var(--text); text-align: right;
+      padding: 1px 5px; min-width: 20px;
+      border-radius: 4px;
+    }
+
+    /* Textarea editable */
+    .edit-area {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 9px 11px;
+      font-size: 12px; line-height: 1.7;
+      color: var(--text-muted);
+      white-space: pre-wrap; min-height: 48px;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .edit-area:hover { border-color: #333; }
+    .edit-area:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); color: var(--text); }
+
+    /* Summary card */
+    .summary-card {
+      background: rgba(255,45,110,.06);
+      border: 1px solid rgba(255,45,110,.15);
+      border-radius: 10px;
+      padding: 9px 11px;
+      font-size: 12px; line-height: 1.7; color: var(--text);
+      display: none;
+      transition: border-color .4s;
+    }
+    .summary-card.visible { display: block; }
+    .summary-row { display: flex; justify-content: space-between; gap: 8px; }
+    .summary-row .sk { color: var(--text-muted); }
+
+    /* ── CHAT ── */
+    .chat-col {
+      flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0;
+    }
+    .chat-messages {
+      flex: 1; overflow-y: auto;
+      padding: 20px 22px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .chat-messages::-webkit-scrollbar { width: 3px; }
+    .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    .msg-row {
+      display: flex; gap: 8px; max-width: 78%;
+      animation: msgIn .18s ease;
+    }
+    @keyframes msgIn { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:translateY(0)} }
+    .msg-row.customer  { align-self: flex-start; }
+    .msg-row.moderator { align-self: flex-end; flex-direction: row-reverse; }
+
+    .msg-av {
+      width: 26px; height: 26px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; flex-shrink: 0; align-self: flex-end;
+      overflow: hidden; background: var(--surface2); border: 1px solid var(--border);
+    }
+    .msg-av img { width: 100%; height: 100%; object-fit: cover; }
+    .msg-av.mod-av { background: linear-gradient(135deg, #ff2d6e, #ff7eb3); border: none; box-shadow: 0 0 8px var(--accent-glow); }
+
+    .msg-inner { display: flex; flex-direction: column; gap: 3px; }
+    .msg-row.moderator .msg-inner { align-items: flex-end; }
+
+    .bubble {
+      padding: 9px 14px; border-radius: var(--radius);
+      font-size: 13.5px; line-height: 1.6; word-break: break-word;
+    }
+    .msg-row.customer .bubble {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-bottom-left-radius: 4px;
+    }
+    .msg-row.moderator .bubble {
+      background: linear-gradient(135deg, #ff2d6e, #ff6b9d);
+      color: #fff; border-bottom-right-radius: 4px;
+      box-shadow: 0 4px 14px var(--accent-glow);
+    }
+    .msg-time { font-size: 10px; color: var(--text-muted); padding: 0 2px; }
+
+    /* Typing */
+    .typing-row { display:flex; gap:8px; align-self:flex-end; flex-direction:row-reverse; animation:msgIn .18s ease; }
+    .typing-bubble {
+      background: linear-gradient(135deg,#ff2d6e,#ff6b9d);
+      border-radius:var(--radius); border-bottom-right-radius:4px;
+      padding:13px 17px; display:flex; gap:5px; align-items:center;
+      box-shadow:0 4px 14px var(--accent-glow);
+    }
+    .t-dot { width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.8);animation:tdot .9s infinite; }
+    .t-dot:nth-child(2){animation-delay:.15s} .t-dot:nth-child(3){animation-delay:.3s}
+    @keyframes tdot{0%,80%,100%{transform:translateY(0);opacity:.6}40%{transform:translateY(-5px);opacity:1}}
+
+    .empty-state {
+      flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+      color:var(--text-muted);gap:10px;
+    }
+    .empty-state .icon{font-size:36px}
+    .empty-state p{font-size:13px}
+    .animate-btn {
+      margin-top: 6px;
+      background: linear-gradient(135deg, #ff2d6e, #ff6b9d);
+      border: none; border-radius: 12px;
+      padding: 10px 24px;
+      color: #fff; font-size: 14px; font-weight: 600;
+      cursor: pointer; box-shadow: 0 4px 14px var(--accent-glow);
+      transition: box-shadow .15s, transform .1s;
+    }
+    .animate-btn:hover { box-shadow: 0 4px 22px rgba(255,45,110,.45); }
+    .animate-btn:active { transform: scale(.95); }
+
+    .err-banner {
+      margin:0 18px 10px;background:rgba(255,45,110,.1);
+      border:1px solid rgba(255,45,110,.4);border-radius:8px;
+      padding:9px 14px;font-size:13px;color:var(--accent);display:none;
+    }
+    .err-banner.show{display:block}
+
+    /* Input */
+    .input-bar {
+      padding:13px 18px;background:var(--surface);
+      border-top:1px solid var(--border);
+      display:flex;gap:10px;align-items:flex-end;flex-shrink:0;
+    }
+    .input-bar textarea {
+      flex:1;background:var(--surface2);border:1px solid var(--border);
+      border-radius:12px;padding:10px 14px;color:var(--text);
+      font-size:13.5px;font-family:inherit;outline:none;resize:none;
+      max-height:120px;line-height:1.5;transition:border-color .2s,box-shadow .2s;
+    }
+    .input-bar textarea:focus { border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow); }
+    .input-bar textarea::placeholder{color:var(--text-muted)}
+    .send-btn {
+      background:linear-gradient(135deg,#ff2d6e,#ff6b9d);border:none;border-radius:12px;
+      width:44px;height:44px;display:flex;align-items:center;justify-content:center;
+      cursor:pointer;flex-shrink:0;box-shadow:0 4px 14px var(--accent-glow);
+      transition:box-shadow .15s,transform .1s;
+    }
+    .send-btn:hover{box-shadow:0 4px 22px rgba(255,45,110,.45)}
+    .send-btn:active{transform:scale(.92)}
+    .send-btn:disabled{opacity:.35;cursor:not-allowed;transform:none}
+    .send-btn svg{width:19px;height:19px;fill:#fff}
+
+    /* Pic URL popup */
+    .pic-url-input {
+      position:absolute;top:80px;left:50%;transform:translateX(-50%);
+      background:var(--surface2);border:1px solid var(--accent);
+      border-radius:8px;padding:6px 10px;
+      color:var(--text);font-size:12px;font-family:inherit;outline:none;
+      width:200px;z-index:10;display:none;
+    }
+    .pic-url-input.show{display:block}
+  </style>
+</head>
+<body>
+
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <img id="lightboxImg" src="" />
+</div>
+<div class="topbar">
+  <div class="topbar-logo">SexyTalk.io <span>| Demo</span></div>
+  <div class="topbar-divider"></div>
+  <div class="lang-wrap">
+    <span class="lang-label" data-i18n="labelLanguage">Language</span>
+    <select id="langSelect" onchange="applyLanguage(this.value)">
+      <option value="de">🇩🇪 German</option>
+      <option value="en">🇬🇧 English</option>
+      <option value="fr">🇫🇷 French</option>
+      <option value="es">🇪🇸 Spanish</option>
+      <option value="it">🇮🇹 Italian</option>
+      <option value="nl">🇳🇱 Dutch</option>
+      <option value="pt">🇵🇹 Portuguese</option>
+      <option value="pl">🇵🇱 Polish</option>
+      <option value="tr">🇹🇷 Turkish</option>
+      <option value="ru">🇷🇺 Russian</option>
+      <option value="sv">🇸🇪 Swedish</option>
+      <option value="da">🇩🇰 Danish</option>
+      <option value="no">🇳🇴 Norwegian</option>
+      <option value="fi">🇫🇮 Finnish</option>
+      <option value="ro">🇷🇴 Romanian</option>
+      <option value="cs">🇨🇿 Czech</option>
+      <option value="hu">🇭🇺 Hungarian</option>
+      <option value="el">🇬🇷 Greek</option>
+      <option value="ar">🇸🇦 Arabic</option>
+      <option value="zh">🇨🇳 Chinese</option>
+      <option value="ja">🇯🇵 Japanese</option>
+      <option value="ko">🇰🇷 Korean</option>
+    </select>
+  </div>
+  <div class="lang-wrap">
+    <span class="lang-label" data-i18n="labelMinLength">Min. Message Characters</span>
+    <input id="minLengthInput" type="number" min="0" value="100"
+      onchange="CONFIG.minLength=parseInt(this.value)||0"
+      oninput="CONFIG.minLength=parseInt(this.value)||0" />
+  </div>
+  <div class="lang-wrap">
+    <span class="lang-label" data-i18n="labelExtraInfo">Extra Info</span>
+    <input id="extraInfoInput" type="text" placeholder="e.g. lovoo, telegram…"
+      onchange="CONFIG.extraInfo=this.value.trim()"
+      oninput="CONFIG.extraInfo=this.value.trim()" />
+  </div>
+  <div class="status-pill"><div class="status-dot"></div><span data-i18n="statusLive"> Live</span></div>
+</div>
+
+<div class="workspace">
+
+  <!-- ── LEFT: CUSTOMER ── -->
+  <div class="profile-panel left">
+    <div class="profile-scroll">
+
+      <div class="profile-hero">
+        <div class="pic-wrap" style="position:relative">
+          <div class="pic-ring" id="custPicRing" onclick="custPicClick()">👤</div>
+          <div class="pic-overlay" id="custPicOverlay" onclick="event.stopPropagation();custPicClick()">Upload</div>
+          <input type="file" id="custFileInput" accept="image/*" style="display:none" onchange="custFileChosen(this)" />
+        </div>
+        <label class="dating-toggle">
+          <input type="checkbox" id="datingAppToggle" onchange="CONFIG.datingApp=this.checked" />
+          <span class="toggle-track"><span class="toggle-thumb"></span></span>
+          <span class="toggle-label" data-i18n="toggleDatingApp">Dating App Customer</span>
+        </label>
+      </div>
+
+      <div class="info-section">
+        <div class="section-label" data-i18n="sectionProfile">Profile</div>
+        <div class="info-row"><span class="k" data-i18n="keyName">Name</span>
+          <span class="v" contenteditable="true" data-field="customer.name" onblur="syncField(this)">Henning</span></div>
+        <div class="info-row"><span class="k" data-i18n="keyUsername">Username</span>
+          <span class="v" contenteditable="true" data-field="customer.username" onblur="syncField(this)">strongpipe</span></div>
+        <div class="info-row"><span class="k" data-i18n="keyAge">Age</span>
+          <span class="v" contenteditable="true" id="cAge" data-field="customer.age" onblur="syncField(this)">61</span></div>
+        <div class="info-row"><span class="k" data-i18n="keyCity">City</span>
+          <span class="v" contenteditable="true" id="cCity" data-field="customer.city" onblur="syncField(this)">Bonn</span></div>
+        <div class="info-row"><span class="k" data-i18n="keyGender">Gender</span>
+          <span class="v" contenteditable="true" data-field="customer.gender" onblur="syncField(this)">Male</span></div>
+        <div class="info-row"><span class="k" data-i18n="keyStatus">Status</span>
+          <span class="v" contenteditable="true" data-field="customer.relationshipStatus" onblur="syncField(this)">Single</span></div>
+        <div class="info-row"><span class="k" data-i18n="keyJob">Job</span>
+          <span class="v" contenteditable="true" data-field="customer.occupation" onblur="syncField(this)">Musiker & Lehrer</span></div>
+        <div class="info-row"><span class="k" data-i18n="keyHobbies">Hobbies</span>
+          <span class="v" contenteditable="true" data-field="customer.hobbies" onblur="syncField(this)">Guitar, Hiking</span></div>
+        <div class="info-row"><span class="k" data-i18n="keyPersonality">Personality</span>
+          <span class="v" contenteditable="true" data-field="customer.personality" onblur="syncField(this)">Creative, calm</span></div>
+        <div class="info-row"><span class="k" data-i18n="keyLookingFor">Looking for</span>
+          <span class="v" contenteditable="true" data-field="customer.lookingFor" onblur="syncField(this)">Flirt</span></div>
+        <div class="info-row"><span class="k" data-i18n="keyEducation">Education</span>
+          <span class="v" contenteditable="true" data-field="customer.education" onblur="syncField(this)">Musikhochschule</span></div>
+        <div class="info-row"><span class="k" data-i18n="keyBodyType">Body type</span>
+          <span class="v" contenteditable="true" data-field="customer.bodyType" onblur="syncField(this)">Normal</span></div>
+        <div class="info-row"><span class="k" data-i18n="keyHeight">Height</span>
+          <span class="v" contenteditable="true" data-field="customer.height" onblur="syncField(this)">178 cm</span></div>
+        <div class="info-row"><span class="k" data-i18n="keyEyeColor">Eye color</span>
+          <span class="v" contenteditable="true" data-field="customer.eyeColor" onblur="syncField(this)">Brown</span></div>
+        <div class="info-row"><span class="k" data-i18n="keySmoking">Smoking</span>
+          <span class="v" contenteditable="true" data-field="customer.smoking" onblur="syncField(this)">Occasionally</span></div>
+        <div class="info-row"><span class="k" data-i18n="keyHasCar">Has car</span>
+          <span class="v" contenteditable="true" data-field="customer.hasCar" onblur="syncField(this)">Yes</span></div>
+        <div class="info-row"><span class="k" data-i18n="keyHousing">Housing</span>
+          <span class="v" contenteditable="true" data-field="customer.housing" onblur="syncField(this)">Own apartment</span></div>
+        <div class="info-row"><span class="k" data-i18n="keyMovies">Movies</span>
+          <span class="v" contenteditable="true" data-field="customer.movies" onblur="syncField(this)">Drama, Thriller</span></div>
+        <div class="info-row"><span class="k" data-i18n="keyMusic">Music</span>
+          <span class="v" contenteditable="true" data-field="customer.music" onblur="syncField(this)">Rock, Blues</span></div>
+      </div>
+
+      <div class="info-section">
+        <div class="section-label" data-i18n="sectionNotes">Notes</div>
+        <div class="edit-area" contenteditable="true" id="custNotesEl"
+          data-field="customerNotes" onblur="syncNotes('cust')"></div>
+      </div>
+
+      <div class="info-section" id="custSummarySection" style="display:none">
+        <div class="section-label"><span data-i18n="sectionAiLearned">AI Learned</span> <span style="color:var(--accent)">↓</span></div>
+        <div class="summary-card visible" id="custSummaryCard"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── CENTER: CHAT ── -->
+  <div class="chat-col">
+    <div class="chat-messages" id="messages">
+      <div class="empty-state" id="emptyState">
+        <div class="icon">💋</div>
+        <p data-i18n="emptyText">Type a Message to See how Sexy you are! 💋</p>
+        <button class="animate-btn" data-i18n="animateBtn" onclick="sendAnimateMe()">Animate me</button>
+      </div>
+    </div>
+    <div class="err-banner" id="errBanner"></div>
+    <div class="input-bar">
+      <textarea id="msgInput" placeholder="Write as customer…" rows="1"
+        onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+      <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+        <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── RIGHT: MODERATOR ── -->
+  <div class="profile-panel right">
+    <div class="profile-scroll">
+
+      <div class="profile-hero">
+        <div class="pic-wrap" style="position:relative">
+          <div class="pic-ring" id="modPicRing" onclick="openLightbox('modPicRing')" style="cursor:zoom-in">🎭</div>
+          <div class="online-badge"></div>
+        </div>
+      </div>
+
+      <div class="info-section">
+        <div class="section-label" data-i18n="sectionPersona">Persona</div>
+        <div class="info-row"><span class="k" data-i18n="keyName">Name</span>
+          <span class="v" contenteditable="true" data-field="moderator.name" onblur="syncField(this)">Liana</span></div>
+        <div class="info-row"><span class="k" data-i18n="keyUsername">Username</span>
+          <span class="v" contenteditable="true" data-field="moderator.username" onblur="syncField(this)">Lianaa</span></div>
+        <div class="info-row"><span class="k" data-i18n="keyAge">Age</span>
+          <span class="v" contenteditable="true" id="mAge" data-field="moderator.age" onblur="syncField(this)">41</span></div>
+        <div class="info-row"><span class="k" data-i18n="keyGender">Gender</span>
+          <span class="v" contenteditable="true" data-field="moderator.gender" onblur="syncField(this)">Female</span></div>
+        <div class="info-row"><span class="k" data-i18n="keyStatus">Status</span>
+          <span class="v" contenteditable="true" data-field="moderator.relationshipStatus" onblur="syncField(this)">Single</span></div>
+        <div class="info-row"><span class="k" data-i18n="keyJob">Job</span>
+          <span class="v" contenteditable="true" data-field="moderator.occupation" onblur="syncField(this)">Hebamme</span></div>
+        <div class="info-row"><span class="k" data-i18n="keyHobbies">Hobbies</span>
+          <span class="v" contenteditable="true" data-field="moderator.hobbies" onblur="syncField(this)">Yoga, Cooking</span></div>
+        <div class="info-row"><span class="k" data-i18n="keyPersonality">Personality</span>
+          <span class="v" contenteditable="true" data-field="moderator.personality" onblur="syncField(this)">Empathic, playful</span></div>
+        <div class="info-row"><span class="k" data-i18n="keyLookingFor">Looking for</span>
+          <span class="v" contenteditable="true" data-field="moderator.lookingFor" onblur="syncField(this)">Chat & Fun</span></div>
+        <div class="info-row"><span class="k" data-i18n="keyEducation">Education</span>
+          <span class="v" contenteditable="true" data-field="moderator.education" onblur="syncField(this)">FH Gesundheitswesen</span></div>
+        <div class="info-row"><span class="k" data-i18n="keyBodyType">Body type</span>
+          <span class="v" contenteditable="true" data-field="moderator.bodyType" onblur="syncField(this)">Slim</span></div>
+        <div class="info-row"><span class="k" data-i18n="keyHeight">Height</span>
+          <span class="v" contenteditable="true" data-field="moderator.height" onblur="syncField(this)">168 cm</span></div>
+        <div class="info-row"><span class="k" data-i18n="keyEyeColor">Eye color</span>
+          <span class="v" contenteditable="true" data-field="moderator.eyeColor" onblur="syncField(this)">Green</span></div>
+        <div class="info-row"><span class="k" data-i18n="keySmoking">Smoking</span>
+          <span class="v" contenteditable="true" data-field="moderator.smoking" onblur="syncField(this)">No</span></div>
+        <div class="info-row"><span class="k" data-i18n="keyHasCar">Has car</span>
+          <span class="v" contenteditable="true" data-field="moderator.hasCar" onblur="syncField(this)">No</span></div>
+        <div class="info-row"><span class="k" data-i18n="keyHousing">Housing</span>
+          <span class="v" contenteditable="true" data-field="moderator.housing" onblur="syncField(this)">Rented flat</span></div>
+        <div class="info-row"><span class="k" data-i18n="keyMovies">Movies</span>
+          <span class="v" contenteditable="true" data-field="moderator.movies" onblur="syncField(this)">Romance, Comedy</span></div>
+        <div class="info-row"><span class="k" data-i18n="keyMusic">Music</span>
+          <span class="v" contenteditable="true" data-field="moderator.music" onblur="syncField(this)">Pop, Chillout</span></div>
+      </div>
+
+      <div class="info-section">
+        <div class="section-label" data-i18n="sectionNotes">Notes</div>
+        <div class="edit-area" contenteditable="true" id="modNotesEl"
+          onblur="syncNotes('mod')"></div>
+      </div>
+
+      <div class="info-section" id="modSummarySection" style="display:none">
+        <div class="section-label"><span data-i18n="sectionAiLearned">AI Learned</span> <span style="color:var(--accent)">↓</span></div>
+        <div class="summary-card visible" id="modSummaryCard"></div>
+      </div>
+
+      <div class="info-section" id="privateGallerySection">
+        <div class="section-label"><span data-i18n="sectionGallery">Private Gallery</span> <span data-i18n="galleryNote" style="color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">(not visible for customer)</span></div>
+        <div class="gallery-grid" id="privateGalleryGrid"></div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ─────────────────────────────────────────
+//  UI LABELS (interface text translations)
+// ─────────────────────────────────────────
+const UI_LABELS = {
+  de: {
+    sectionProfile:'Profil', sectionPersona:'Persona', sectionNotes:'Notizen',
+    sectionAiLearned:'KI gelernt', sectionGallery:'Private Galerie', galleryNote:'(für Kunden nicht sichtbar)',
+    keyName:'Name', keyUsername:'Benutzername', keyAge:'Alter', keyCity:'Stadt',
+    keyGender:'Geschlecht', keyStatus:'Status', keyJob:'Beruf', keyHobbies:'Hobbys',
+    keyPersonality:'Persönlichkeit', keyLookingFor:'Sucht nach', keyEducation:'Bildung',
+    keyBodyType:'Körpertyp', keyHeight:'Größe', keyEyeColor:'Augenfarbe',
+    keySmoking:'Rauchen', keyHasCar:'Hat Auto', keyHousing:'Wohnsituation',
+    keyMovies:'Filme', keyMusic:'Musik',
+    toggleDatingApp:'Dating App Kunde',
+    emptyText:'Schreib eine Nachricht um zu sehen wie sexy du bist! 💋',
+    animateBtn:'Animiere mich',
+    labelLanguage:'Sprache', labelMinLength:'Min. Nachrichtenlänge', labelExtraInfo:'Extra Info',
+    statusLive:' Live', chatPlaceholder:'Als Kunde schreiben…',
+  },
+  en: {
+    sectionProfile:'Profile', sectionPersona:'Persona', sectionNotes:'Notes',
+    sectionAiLearned:'AI Learned', sectionGallery:'Private Gallery', galleryNote:'(not visible for customer)',
+    keyName:'Name', keyUsername:'Username', keyAge:'Age', keyCity:'City',
+    keyGender:'Gender', keyStatus:'Status', keyJob:'Job', keyHobbies:'Hobbies',
+    keyPersonality:'Personality', keyLookingFor:'Looking for', keyEducation:'Education',
+    keyBodyType:'Body type', keyHeight:'Height', keyEyeColor:'Eye color',
+    keySmoking:'Smoking', keyHasCar:'Has car', keyHousing:'Housing',
+    keyMovies:'Movies', keyMusic:'Music',
+    toggleDatingApp:'Dating App Customer',
+    emptyText:'Type a Message to See how Sexy you are! 💋',
+    animateBtn:'Animate me',
+    labelLanguage:'Language', labelMinLength:'Min. Message Characters', labelExtraInfo:'Extra Info',
+    statusLive:' Live', chatPlaceholder:'Write as customer…',
+  },
+  fr: {
+    sectionProfile:'Profil', sectionPersona:'Persona', sectionNotes:'Notes',
+    sectionAiLearned:'IA appris', sectionGallery:'Galerie privée', galleryNote:'(non visible pour le client)',
+    keyName:'Nom', keyUsername:'Nom d\'utilisateur', keyAge:'Âge', keyCity:'Ville',
+    keyGender:'Genre', keyStatus:'Statut', keyJob:'Métier', keyHobbies:'Loisirs',
+    keyPersonality:'Personnalité', keyLookingFor:'Recherche', keyEducation:'Formation',
+    keyBodyType:'Morphologie', keyHeight:'Taille', keyEyeColor:'Couleur des yeux',
+    keySmoking:'Tabac', keyHasCar:'A une voiture', keyHousing:'Logement',
+    keyMovies:'Films', keyMusic:'Musique',
+    toggleDatingApp:'Client d\'app de rencontre',
+    emptyText:'Écris un message pour voir à quel point tu es sexy ! 💋',
+    animateBtn:'Anime-moi',
+    labelLanguage:'Langue', labelMinLength:'Longueur min. du message', labelExtraInfo:'Info supplémentaire',
+    statusLive:' En direct', chatPlaceholder:'Écrire en tant que client…',
+  },
+  es: {
+    sectionProfile:'Perfil', sectionPersona:'Persona', sectionNotes:'Notas',
+    sectionAiLearned:'IA aprendió', sectionGallery:'Galería privada', galleryNote:'(no visible para el cliente)',
+    keyName:'Nombre', keyUsername:'Usuario', keyAge:'Edad', keyCity:'Ciudad',
+    keyGender:'Género', keyStatus:'Estado', keyJob:'Trabajo', keyHobbies:'Aficiones',
+    keyPersonality:'Personalidad', keyLookingFor:'Busca', keyEducation:'Educación',
+    keyBodyType:'Complexión', keyHeight:'Altura', keyEyeColor:'Color de ojos',
+    keySmoking:'Fumar', keyHasCar:'Tiene coche', keyHousing:'Vivienda',
+    keyMovies:'Películas', keyMusic:'Música',
+    toggleDatingApp:'Cliente de app de citas',
+    emptyText:'¡Escribe un mensaje para ver lo sexy que eres! 💋',
+    animateBtn:'Anímate',
+    labelLanguage:'Idioma', labelMinLength:'Caract. mín. del mensaje', labelExtraInfo:'Info extra',
+    statusLive:' En vivo', chatPlaceholder:'Escribir como cliente…',
+  },
+  it: {
+    sectionProfile:'Profilo', sectionPersona:'Persona', sectionNotes:'Note',
+    sectionAiLearned:'IA ha imparato', sectionGallery:'Galleria privata', galleryNote:'(non visibile al cliente)',
+    keyName:'Nome', keyUsername:'Nome utente', keyAge:'Età', keyCity:'Città',
+    keyGender:'Genere', keyStatus:'Stato', keyJob:'Lavoro', keyHobbies:'Hobby',
+    keyPersonality:'Personalità', keyLookingFor:'Cerca', keyEducation:'Istruzione',
+    keyBodyType:'Corporatura', keyHeight:'Altezza', keyEyeColor:'Colore occhi',
+    keySmoking:'Fumo', keyHasCar:'Ha auto', keyHousing:'Abitazione',
+    keyMovies:'Film', keyMusic:'Musica',
+    toggleDatingApp:'Cliente app di dating',
+    emptyText:'Scrivi un messaggio per scoprire quanto sei sexy! 💋',
+    animateBtn:'Animami',
+    labelLanguage:'Lingua', labelMinLength:'Car. min. messaggio', labelExtraInfo:'Info extra',
+    statusLive:' Live', chatPlaceholder:'Scrivi come cliente…',
+  },
+  nl: {
+    sectionProfile:'Profiel', sectionPersona:'Persona', sectionNotes:'Notities',
+    sectionAiLearned:'AI geleerd', sectionGallery:'Privégalerij', galleryNote:'(niet zichtbaar voor klant)',
+    keyName:'Naam', keyUsername:'Gebruikersnaam', keyAge:'Leeftijd', keyCity:'Stad',
+    keyGender:'Geslacht', keyStatus:'Status', keyJob:'Beroep', keyHobbies:'Hobby\'s',
+    keyPersonality:'Persoonlijkheid', keyLookingFor:'Zoekt', keyEducation:'Opleiding',
+    keyBodyType:'Lichaamsbouw', keyHeight:'Lengte', keyEyeColor:'Oogkleur',
+    keySmoking:'Roken', keyHasCar:'Heeft auto', keyHousing:'Woning',
+    keyMovies:'Films', keyMusic:'Muziek',
+    toggleDatingApp:'Dating app klant',
+    emptyText:'Stuur een bericht om te zien hoe sexy je bent! 💋',
+    animateBtn:'Animeer mij',
+    labelLanguage:'Taal', labelMinLength:'Min. berichtlengte', labelExtraInfo:'Extra info',
+    statusLive:' Live', chatPlaceholder:'Schrijf als klant…',
+  },
+  pt: {
+    sectionProfile:'Perfil', sectionPersona:'Persona', sectionNotes:'Notas',
+    sectionAiLearned:'IA aprendeu', sectionGallery:'Galeria privada', galleryNote:'(não visível para o cliente)',
+    keyName:'Nome', keyUsername:'Utilizador', keyAge:'Idade', keyCity:'Cidade',
+    keyGender:'Género', keyStatus:'Estado', keyJob:'Profissão', keyHobbies:'Passatempos',
+    keyPersonality:'Personalidade', keyLookingFor:'Procura', keyEducation:'Educação',
+    keyBodyType:'Tipo de corpo', keyHeight:'Altura', keyEyeColor:'Cor dos olhos',
+    keySmoking:'Fumar', keyHasCar:'Tem carro', keyHousing:'Habitação',
+    keyMovies:'Filmes', keyMusic:'Música',
+    toggleDatingApp:'Cliente de app de namoro',
+    emptyText:'Escreve uma mensagem para ver o quão sexy és! 💋',
+    animateBtn:'Anima-me',
+    labelLanguage:'Idioma', labelMinLength:'Car. mín. da mensagem', labelExtraInfo:'Info extra',
+    statusLive:' Ao vivo', chatPlaceholder:'Escrever como cliente…',
+  },
+  pl: {
+    sectionProfile:'Profil', sectionPersona:'Persona', sectionNotes:'Notatki',
+    sectionAiLearned:'AI nauczyło się', sectionGallery:'Prywatna galeria', galleryNote:'(niewidoczne dla klienta)',
+    keyName:'Imię', keyUsername:'Nazwa użytkownika', keyAge:'Wiek', keyCity:'Miasto',
+    keyGender:'Płeć', keyStatus:'Status', keyJob:'Zawód', keyHobbies:'Hobby',
+    keyPersonality:'Osobowość', keyLookingFor:'Szuka', keyEducation:'Wykształcenie',
+    keyBodyType:'Budowa ciała', keyHeight:'Wzrost', keyEyeColor:'Kolor oczu',
+    keySmoking:'Palenie', keyHasCar:'Ma auto', keyHousing:'Mieszkanie',
+    keyMovies:'Filmy', keyMusic:'Muzyka',
+    toggleDatingApp:'Klient aplikacji randkowej',
+    emptyText:'Napisz wiadomość, aby zobaczyć jak bardzo jesteś seksowny! 💋',
+    animateBtn:'Animuj mnie',
+    labelLanguage:'Język', labelMinLength:'Min. długość wiadomości', labelExtraInfo:'Dodatkowe info',
+    statusLive:' Na żywo', chatPlaceholder:'Pisz jako klient…',
+  },
+  tr: {
+    sectionProfile:'Profil', sectionPersona:'Karakter', sectionNotes:'Notlar',
+    sectionAiLearned:'AI öğrendi', sectionGallery:'Özel Galeri', galleryNote:'(müşteriye görünmez)',
+    keyName:'İsim', keyUsername:'Kullanıcı adı', keyAge:'Yaş', keyCity:'Şehir',
+    keyGender:'Cinsiyet', keyStatus:'Durum', keyJob:'Meslek', keyHobbies:'Hobiler',
+    keyPersonality:'Kişilik', keyLookingFor:'Arıyor', keyEducation:'Eğitim',
+    keyBodyType:'Vücut tipi', keyHeight:'Boy', keyEyeColor:'Göz rengi',
+    keySmoking:'Sigara', keyHasCar:'Arabası var', keyHousing:'Konut',
+    keyMovies:'Filmler', keyMusic:'Müzik',
+    toggleDatingApp:'Dating uygulaması müşterisi',
+    emptyText:'Ne kadar seksi olduğunu görmek için mesaj yaz! 💋',
+    animateBtn:'Beni canlandır',
+    labelLanguage:'Dil', labelMinLength:'Min. mesaj karakteri', labelExtraInfo:'Ekstra bilgi',
+    statusLive:' Canlı', chatPlaceholder:'Müşteri olarak yaz…',
+  },
+  ru: {
+    sectionProfile:'Профиль', sectionPersona:'Персона', sectionNotes:'Заметки',
+    sectionAiLearned:'ИИ узнал', sectionGallery:'Приватная галерея', galleryNote:'(не видна клиенту)',
+    keyName:'Имя', keyUsername:'Имя пользователя', keyAge:'Возраст', keyCity:'Город',
+    keyGender:'Пол', keyStatus:'Статус', keyJob:'Профессия', keyHobbies:'Хобби',
+    keyPersonality:'Личность', keyLookingFor:'Ищет', keyEducation:'Образование',
+    keyBodyType:'Телосложение', keyHeight:'Рост', keyEyeColor:'Цвет глаз',
+    keySmoking:'Курение', keyHasCar:'Есть машина', keyHousing:'Жильё',
+    keyMovies:'Фильмы', keyMusic:'Музыка',
+    toggleDatingApp:'Клиент приложения знакомств',
+    emptyText:'Напиши сообщение, чтобы узнать, насколько ты сексуален! 💋',
+    animateBtn:'Оживи меня',
+    labelLanguage:'Язык', labelMinLength:'Мин. символов в сообщении', labelExtraInfo:'Доп. информация',
+    statusLive:' Прямой эфир', chatPlaceholder:'Писать как клиент…',
+  },
+  sv: {
+    sectionProfile:'Profil', sectionPersona:'Persona', sectionNotes:'Anteckningar',
+    sectionAiLearned:'AI lärde sig', sectionGallery:'Privat galleri', galleryNote:'(inte synlig för kund)',
+    keyName:'Namn', keyUsername:'Användarnamn', keyAge:'Ålder', keyCity:'Stad',
+    keyGender:'Kön', keyStatus:'Status', keyJob:'Yrke', keyHobbies:'Intressen',
+    keyPersonality:'Personlighet', keyLookingFor:'Söker', keyEducation:'Utbildning',
+    keyBodyType:'Kroppstyp', keyHeight:'Längd', keyEyeColor:'Ögonfärg',
+    keySmoking:'Rökning', keyHasCar:'Har bil', keyHousing:'Bostad',
+    keyMovies:'Filmer', keyMusic:'Musik',
+    toggleDatingApp:'Dating-app-kund',
+    emptyText:'Skriv ett meddelande för att se hur sexig du är! 💋',
+    animateBtn:'Animera mig',
+    labelLanguage:'Språk', labelMinLength:'Min. meddelandetecken', labelExtraInfo:'Extra info',
+    statusLive:' Live', chatPlaceholder:'Skriv som kund…',
+  },
+};
+const getUI = code => UI_LABELS[code] || UI_LABELS['en'];
+
+// ─────────────────────────────────────────
+//  TRANSLATIONS
+// ─────────────────────────────────────────
+const LANG_DATA = {
+  de: {
+    customer: {
+      gender:'Männlich', relationshipStatus:'Single', occupation:'Selbständiger Musiker & Musiklehrer',
+      hobbies:'Gitarre spielen, Songwriting, Wandern', personality:'kreativ, ruhig, humorvoll',
+      lookingFor:'Flirt', education:'Musikhochschule Köln', bodyType:'Normal',
+      eyeColor:'Braun', smoking:'Gelegentlich', hasCar:'Ja', housing:'Eigene Wohnung',
+      movies:'Drama, Thriller', music:'Rock, Blues, Jazz',
+    },
+    customerNotes:'',
+    moderator: {
+      gender:'Weiblich', relationshipStatus:'Single', occupation:'Hebamme',
+      hobbies:'Yoga, Kochen, Spaziergänge', personality:'offen, empathisch, verspielt',
+      lookingFor:'Chat & Unterhaltung', education:'FH Gesundheitswesen', bodyType:'Schlank',
+      eyeColor:'Grün', smoking:'Nein', hasCar:'Nein', housing:'Mietwohnung',
+      movies:'Romantik, Komödie', music:'Pop, Chillout',
+    },
+    moderatorNotes:'',
+    yrsSuffix:' Jahre',
+  },
+  en: {
+    customer: {
+      gender:'Male', relationshipStatus:'Single', occupation:'Self-employed Musician & Music Teacher',
+      hobbies:'Playing guitar, Songwriting, Hiking', personality:'Creative, calm, humorous',
+      lookingFor:'Flirt', education:'College of Music Cologne', bodyType:'Normal',
+      eyeColor:'Brown', smoking:'Occasionally', hasCar:'Yes', housing:'Own apartment',
+      movies:'Drama, Thriller', music:'Rock, Blues, Jazz',
+    },
+    customerNotes:'',
+    moderator: {
+      gender:'Female', relationshipStatus:'Single', occupation:'Midwife',
+      hobbies:'Yoga, Cooking, Walks', personality:'Open, empathetic, playful',
+      lookingFor:'Chat & Entertainment', education:'University of Applied Sciences', bodyType:'Slim',
+      eyeColor:'Green', smoking:'No', hasCar:'No', housing:'Rented flat',
+      movies:'Romance, Comedy', music:'Pop, Chillout',
+    },
+    moderatorNotes:'',
+    yrsSuffix:' yrs',
+  },
+  fr: {
+    customer: {
+      gender:'Masculin', relationshipStatus:'Célibataire', occupation:'Musicien & Professeur de musique indépendant',
+      hobbies:'Guitare, Composition, Randonnée', personality:'Créatif, calme, drôle',
+      lookingFor:'Flirt', education:'Conservatoire de Cologne', bodyType:'Normal',
+      eyeColor:'Marron', smoking:'Occasionnellement', hasCar:'Oui', housing:'Appartement personnel',
+      movies:'Drame, Thriller', music:'Rock, Blues, Jazz',
+    },
+    customerNotes:'',
+    moderator: {
+      gender:'Féminin', relationshipStatus:'Célibataire', occupation:'Sage-femme',
+      hobbies:'Yoga, Cuisine, Promenades', personality:'Ouverte, empathique, enjouée',
+      lookingFor:'Chat & Divertissement', education:'École supérieure de santé', bodyType:'Mince',
+      eyeColor:'Verts', smoking:'Non', hasCar:'Non', housing:'Appartement loué',
+      movies:'Romance, Comédie', music:'Pop, Chillout',
+    },
+    moderatorNotes:'',
+    yrsSuffix:' ans',
+  },
+  es: {
+    customer: {
+      gender:'Masculino', relationshipStatus:'Soltero', occupation:'Músico y profesor de música autónomo',
+      hobbies:'Guitarra, Composición, Senderismo', personality:'Creativo, tranquilo, gracioso',
+      lookingFor:'Flirt', education:'Conservatorio de Colonia', bodyType:'Normal',
+      eyeColor:'Marrón', smoking:'A veces', hasCar:'Sí', housing:'Piso propio',
+      movies:'Drama, Thriller', music:'Rock, Blues, Jazz',
+    },
+    customerNotes:'',
+    moderator: {
+      gender:'Femenino', relationshipStatus:'Soltera', occupation:'Partera / Comadrona',
+      hobbies:'Yoga, Cocinar, Paseos', personality:'Abierta, empática, juguetona',
+      lookingFor:'Chat y entretenimiento', education:'Universidad de Ciencias Aplicadas', bodyType:'Delgada',
+      eyeColor:'Verde', smoking:'No', hasCar:'No', housing:'Piso alquilado',
+      movies:'Romance, Comedia', music:'Pop, Chillout',
+    },
+    moderatorNotes:'',
+    yrsSuffix:' años',
+  },
+  it: {
+    customer: {
+      gender:'Maschile', relationshipStatus:'Single', occupation:'Musicista e insegnante di musica autonomo',
+      hobbies:'Chitarra, Composizione, Escursioni', personality:'Creativo, calmo, simpatico',
+      lookingFor:'Flirt', education:'Conservatorio di Colonia', bodyType:'Normale',
+      eyeColor:'Marrone', smoking:'Occasionalmente', hasCar:'Sì', housing:'Appartamento proprio',
+      movies:'Dramma, Thriller', music:'Rock, Blues, Jazz',
+    },
+    customerNotes:'',
+    moderator: {
+      gender:'Femminile', relationshipStatus:'Single', occupation:'Ostetrica',
+      hobbies:'Yoga, Cucina, Passeggiate', personality:'Aperta, empatica, giocosa',
+      lookingFor:'Chat e intrattenimento', education:'Università delle scienze applicate', bodyType:'Snella',
+      eyeColor:'Verde', smoking:'No', hasCar:'No', housing:'Appartamento in affitto',
+      movies:'Romantico, Commedia', music:'Pop, Chillout',
+    },
+    moderatorNotes:'',
+    yrsSuffix:' anni',
+  },
+  nl: {
+    customer: {
+      gender:'Man', relationshipStatus:'Single', occupation:'Zelfstandig muzikant & muziekleraar',
+      hobbies:'Gitaar spelen, Songwriting, Wandelen', personality:'Creatief, rustig, grappig',
+      lookingFor:'Flirt', education:'Muziekhogeschool Keulen', bodyType:'Normaal',
+      eyeColor:'Bruin', smoking:'Af en toe', hasCar:'Ja', housing:'Eigen appartement',
+      movies:'Drama, Thriller', music:'Rock, Blues, Jazz',
+    },
+    customerNotes:'',
+    moderator: {
+      gender:'Vrouw', relationshipStatus:'Single', occupation:'Vroedvrouw',
+      hobbies:'Yoga, Koken, Wandelingen', personality:'Open, empathisch, speels',
+      lookingFor:'Chat & Ontspanning', education:'Hogeschool Gezondheidszorg', bodyType:'Slank',
+      eyeColor:'Groen', smoking:'Nee', hasCar:'Nee', housing:'Huurappartement',
+      movies:'Romantiek, Komedie', music:'Pop, Chillout',
+    },
+    moderatorNotes:'',
+    yrsSuffix:' jr',
+  },
+  pt: {
+    customer: {
+      gender:'Masculino', relationshipStatus:'Solteiro', occupation:'Músico e professor de música independente',
+      hobbies:'Guitarra, Composição, Caminhadas', personality:'Criativo, calmo, bem-humorado',
+      lookingFor:'Flirt', education:'Conservatório de Colônia', bodyType:'Normal',
+      eyeColor:'Castanho', smoking:'Às vezes', hasCar:'Sim', housing:'Apartamento próprio',
+      movies:'Drama, Thriller', music:'Rock, Blues, Jazz',
+    },
+    customerNotes:'',
+    moderator: {
+      gender:'Feminino', relationshipStatus:'Solteira', occupation:'Parteira',
+      hobbies:'Yoga, Culinária, Caminhadas', personality:'Aberta, empática, brincalhona',
+      lookingFor:'Chat e entretenimento', education:'Universidade de Ciências Aplicadas', bodyType:'Magra',
+      eyeColor:'Verde', smoking:'Não', hasCar:'Não', housing:'Apartamento alugado',
+      movies:'Romance, Comédia', music:'Pop, Chillout',
+    },
+    moderatorNotes:'',
+    yrsSuffix:' anos',
+  },
+  pl: {
+    customer: {
+      gender:'Mężczyzna', relationshipStatus:'Singiel', occupation:'Niezależny muzyk i nauczyciel muzyki',
+      hobbies:'Gitara, Kompozycja, Wędrówki', personality:'Kreatywny, spokojny, zabawny',
+      lookingFor:'Flirt', education:'Akademia Muzyczna w Kolonii', bodyType:'Normalny',
+      eyeColor:'Brązowe', smoking:'Okazjonalnie', hasCar:'Tak', housing:'Własne mieszkanie',
+      movies:'Dramat, Thriller', music:'Rock, Blues, Jazz',
+    },
+    customerNotes:'',
+    moderator: {
+      gender:'Kobieta', relationshipStatus:'Singielka', occupation:'Położna',
+      hobbies:'Joga, Gotowanie, Spacery', personality:'Otwarta, empatyczna, figlarna',
+      lookingFor:'Chat i rozrywka', education:'Wyższa Szkoła Zdrowia', bodyType:'Szczupła',
+      eyeColor:'Zielone', smoking:'Nie', hasCar:'Nie', housing:'Wynajmowane mieszkanie',
+      movies:'Romans, Komedia', music:'Pop, Chillout',
+    },
+    moderatorNotes:'',
+    yrsSuffix:' l.',
+  },
+  tr: {
+    customer: {
+      gender:'Erkek', relationshipStatus:'Bekar', occupation:'Serbest müzisyen ve müzik öğretmeni',
+      hobbies:'Gitar, Şarkı yazarlığı, Yürüyüş', personality:'Yaratıcı, sakin, esprili',
+      lookingFor:'Flört', education:'Köln Müzik Akademisi', bodyType:'Normal',
+      eyeColor:'Kahverengi', smoking:'Ara sıra', hasCar:'Evet', housing:'Kendi dairesi',
+      movies:'Drama, Gerilim', music:'Rock, Blues, Jazz',
+    },
+    customerNotes:'',
+    moderator: {
+      gender:'Kadın', relationshipStatus:'Bekar', occupation:'Ebe',
+      hobbies:'Yoga, Yemek pişirme, Yürüyüş', personality:'Açık, empatik, oyunbaz',
+      lookingFor:'Sohbet & Eğlence', education:'Uygulamalı Bilimler Üniversitesi', bodyType:'İnce',
+      eyeColor:'Yeşil', smoking:'Hayır', hasCar:'Hayır', housing:'Kiralık daire',
+      movies:'Romantik, Komedi', music:'Pop, Chillout',
+    },
+    moderatorNotes:'',
+    yrsSuffix:' yaş',
+  },
+  ru: {
+    customer: {
+      gender:'Мужчина', relationshipStatus:'Одинок', occupation:'Независимый музыкант и учитель музыки',
+      hobbies:'Гитара, Сонграйтинг, Походы', personality:'Творческий, спокойный, весёлый',
+      lookingFor:'Флирт', education:'Кёльнская высшая школа музыки', bodyType:'Нормальное',
+      eyeColor:'Карие', smoking:'Иногда', hasCar:'Да', housing:'Собственная квартира',
+      movies:'Драма, Триллер', music:'Рок, Блюз, Джаз',
+    },
+    customerNotes:'',
+    moderator: {
+      gender:'Женщина', relationshipStatus:'Одинока', occupation:'Акушерка',
+      hobbies:'Йога, Кулинария, Прогулки', personality:'Открытая, эмпатичная, игривая',
+      lookingFor:'Общение и развлечения', education:'Университет прикладных наук', bodyType:'Стройное',
+      eyeColor:'Зелёные', smoking:'Нет', hasCar:'Нет', housing:'Арендованная квартира',
+      movies:'Романтика, Комедия', music:'Поп, Чиллаут',
+    },
+    moderatorNotes:'',
+    yrsSuffix:' лет',
+  },
+  sv: {
+    customer: {
+      gender:'Man', relationshipStatus:'Singel', occupation:'Frilansmusiker och musiklärare',
+      hobbies:'Gitarr, Låtskrivning, Vandring', personality:'Kreativ, lugn, rolig',
+      lookingFor:'Flirt', education:'Musikhögskolan i Köln', bodyType:'Normal',
+      eyeColor:'Bruna', smoking:'Ibland', hasCar:'Ja', housing:'Egen lägenhet',
+      movies:'Drama, Thriller', music:'Rock, Blues, Jazz',
+    },
+    customerNotes:'',
+    moderator: {
+      gender:'Kvinna', relationshipStatus:'Singel', occupation:'Barnmorska',
+      hobbies:'Yoga, Matlagning, Promenader', personality:'Öppen, empatisk, lekfull',
+      lookingFor:'Chatt & Underhållning', education:'Högskola för hälsovetenskap', bodyType:'Smal',
+      eyeColor:'Gröna', smoking:'Nej', hasCar:'Nej', housing:'Hyreslägenhet',
+      movies:'Romantik, Komedi', music:'Pop, Chillout',
+    },
+    moderatorNotes:'',
+    yrsSuffix:' år',
+  },
+};
+// Fallback to English for unmapped languages
+const getLang = code => LANG_DATA[code] || LANG_DATA['en'];
+
+function applyUILabels(code) {
+  const ui = getUI(code);
+  const enUI = UI_LABELS['en'];
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.dataset.i18n;
+    // Field labels (keyName, keyGender, etc.) always stay in English
+    const val = key.startsWith('key') ? enUI[key] : ui[key];
+    if (val !== undefined) el.textContent = val;
+  });
+  const inp = document.getElementById('msgInput');
+  if (inp) inp.placeholder = ui.chatPlaceholder;
+}
+
+function applyLanguage(code) {
+  CONFIG.sourceLanguage = code;
+  applyUILabels(code);
+  const lang = getLang(code);
+  const suffix = lang.yrsSuffix || ' yrs';
+
+  // Update all [data-field] elements
+  document.querySelectorAll('[data-field]').forEach(el => {
+    const [obj, key] = el.dataset.field.split('.');
+    if (obj === 'customer'  && lang.customer[key]  !== undefined) el.innerText = lang.customer[key];
+    if (obj === 'moderator' && lang.moderator[key] !== undefined) el.innerText = lang.moderator[key];
+  });
+
+  // Age fields — just the number
+  const cAgeEl = document.getElementById('cAge');
+  const mAgeEl = document.getElementById('mAge');
+  if (cAgeEl) cAgeEl.innerText = CONFIG.customer.birthDate.age;
+  if (mAgeEl) mAgeEl.innerText = CONFIG.moderator.birthDate.age;
+
+  // Notes
+  document.getElementById('custNotesEl').innerText = lang.customerNotes;
+  document.getElementById('modNotesEl').innerText  = lang.moderatorNotes;
+  CONFIG.customerNotes  = lang.customerNotes;
+  CONFIG.moderatorNotes = lang.moderatorNotes;
+
+  // Sync translated values into CONFIG
+  Object.assign(CONFIG.customer,  lang.customer);
+  Object.assign(CONFIG.moderator, lang.moderator);
+}
+
+// ─────────────────────────────────────────
+//  CONFIG  ← edit defaults here
+// ─────────────────────────────────────────
+const CONFIG = {
+  apiKey:    'ct-9c0cceda-4e0c-45bf-8e3c-ccd1e9bb2178',
+  endpoint:  'http://localhost:3001',
+  origin:         'kizzle.net',
+  minLength:      100,
+  sourceLanguage: 'de',
+  extraInfo: '',
+  datingApp: false,
+
+  customerNotes: document.getElementById('custNotesEl').innerText,
+  moderatorNotes: document.getElementById('modNotesEl').innerText,
+
+  customer: {
+    id: 'cust_demo', name: 'Henning', gender: 'male', username: 'strongpipe',
+    city: 'Bonn', postalCode: '53229', country: 'DE',
+    occupation: 'Selbständiger Musiker & Musiklehrer',
+    education: 'Musikhochschule Köln',
+    birthDate: { age: 61, date: '1964-05-18T00:00:00.000Z' },
+    hobbies: 'Gitarre spielen, Songwriting, Wandern',
+    music: 'Rock, Blues', movies: 'Drama, Thriller',
+    relationshipStatus: 'Single', lookingFor: 'Flirt',
+    bodyType: 'normal', height: '178 cm', eyeColor: 'braun',
+    smoking: 'gelegentlich', hasCar: true, housing: 'Eigene Wohnung',
+    hasProfilePic: false, hasPictures: false,
+    personality: 'kreativ, ruhig, humorvoll',
+    profilePic: '',
+  },
+
+  moderator: {
+    id: 'mod_demo', name: 'Liana', gender: 'female', username: 'Lianaa',
+    city: 'Bonn', postalCode: '53225', country: 'DE',
+    occupation: 'Hebamme',
+    education: 'Fachhochschule Gesundheitswesen',
+    birthDate: { age: 41, date: '1984-02-11T00:00:00.000Z' },
+    hobbies: 'Yoga, Kochen, Spaziergänge',
+    music: 'Pop, Chillout', movies: 'Romantik, Komödie',
+    relationshipStatus: 'Single', lookingFor: 'Chat & Unterhaltung',
+    bodyType: 'schlank', height: '168 cm', eyeColor: 'grün',
+    smoking: 'nein', hasCar: false, housing: 'Mietwohnung',
+    hasProfilePic: true, hasPictures: true,
+    personality: 'offen, empathisch, verspielt',
+    profilePic: 'images/moderator/photo-001.jpg',
+    privateGallery: [
+      'images/moderator/photo-002.jpg',
+      'images/moderator/photo-003.jpg',
+      'images/moderator/photo-004.jpg',
+      'images/moderator/photo-005.jpg',
+      'images/moderator/photo-006.jpg',
+      'images/moderator/photo-007.jpg',
+      'images/moderator/photo-008.jpg',
+    ],
+  },
+};
+
+// State
+const state = {
+  messages: [], ins: 0, outs: 0,
+  chatId: String(Math.floor(100000 + Math.random() * 900000)),
+  sessionStart: new Date().toISOString(),
+  loading: false,
+  summaryUser: {}, summaryAssistant: {},
+};
+
+// ── SYNC EDITABLE FIELDS → CONFIG ──
+function syncField(el) {
+  const path  = el.dataset.field;   // e.g. "customer.gender"
+  const value = el.innerText.trim();
+  if (!path) return;
+  const [obj, key] = path.split('.');
+  if (obj === 'customer')  CONFIG.customer[key]  = value;
+  if (obj === 'moderator') CONFIG.moderator[key] = value;
+  // keep birthDate.age in sync
+  if (key === 'age') {
+    const num = parseInt(value);
+    if (!isNaN(num)) {
+      if (obj === 'customer')  CONFIG.customer.birthDate.age  = num;
+      if (obj === 'moderator') CONFIG.moderator.birthDate.age = num;
+    }
+  }
+}
+
+function syncNotes(who) {
+  if (who === 'cust') CONFIG.customerNotes = document.getElementById('custNotesEl').innerText;
+  if (who === 'mod')  CONFIG.moderatorNotes = document.getElementById('modNotesEl').innerText;
+}
+
+// ── PROFILE PIC ──
+function openPicInput(who) {
+  const inp = document.getElementById(who + 'PicInput');
+  inp.classList.add('show');
+  inp.value = who === 'cust' ? CONFIG.customer.profilePic : CONFIG.moderator.profilePic;
+  inp.focus();
+}
+function applyPic(who) {
+  const inp = document.getElementById(who + 'PicInput');
+  inp.classList.remove('show');
+  const url = inp.value.trim();
+  const ring = document.getElementById(who + 'PicRing');
+  if (who === 'cust') CONFIG.customer.profilePic = url;
+  else               CONFIG.moderator.profilePic = url;
+  if (url) {
+    ring.innerHTML = `<img src="${url}" onerror="this.parentElement.textContent='${who==='cust'?'👤':'🎭'}'" />`;
+  } else {
+    ring.textContent = who === 'cust' ? '👤' : '🎭';
+  }
+}
+
+// ── CHAT HELPERS ──
+function fmtTime(iso) { return new Date(iso).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); }
+function autoResize(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,120)+'px'; }
+function handleKey(e) { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();} }
+function scrollBottom() { const m=document.getElementById('messages'); m.scrollTop=m.scrollHeight; }
+
+function appendMessage(msg) {
+  document.getElementById('emptyState').style.display = 'none';
+  const container = document.getElementById('messages');
+  const isMod = msg.type === 'sent';
+
+  const row = document.createElement('div');
+  row.className = `msg-row ${isMod ? 'moderator' : 'customer'}`;
+
+  const av = document.createElement('div');
+  av.className = isMod ? 'msg-av mod-av' : 'msg-av';
+  const pic = isMod ? CONFIG.moderator.profilePic : CONFIG.customer.profilePic;
+  if (pic) { av.innerHTML = `<img src="${pic}" />`; }
+  else { av.textContent = isMod ? '🎭' : '👤'; }
+
+  const inner = document.createElement('div'); inner.className = 'msg-inner';
+  const bubble = document.createElement('div'); bubble.className = 'bubble';
+  bubble.textContent = msg.text;
+  const time = document.createElement('div'); time.className = 'msg-time';
+  time.textContent = fmtTime(msg.timestamp);
+
+  inner.appendChild(bubble); inner.appendChild(time);
+  row.appendChild(av); row.appendChild(inner);
+  container.appendChild(row);
+  scrollBottom();
+}
+
+function showTyping() {
+  const c = document.getElementById('messages');
+  const row = document.createElement('div'); row.className='typing-row'; row.id='typingRow';
+  const av = document.createElement('div'); av.className='msg-av mod-av';
+  if (CONFIG.moderator.profilePic) { const img=document.createElement('img'); img.src=CONFIG.moderator.profilePic; img.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:50%'; av.appendChild(img); } else { av.textContent='🎭'; }
+  const b = document.createElement('div'); b.className='typing-bubble';
+  for(let i=0;i<3;i++){const d=document.createElement('div');d.className='t-dot';b.appendChild(d);}
+  row.appendChild(av); row.appendChild(b); c.appendChild(row); scrollBottom();
+}
+function hideTyping() { const el=document.getElementById('typingRow'); if(el)el.remove(); }
+
+// ── SUMMARY CARDS ──
+function updateSummaryCards(isNew) {
+  const renderCard = (data, cardId, sectionId) => {
+    const keys = Object.keys(data);
+    if (!keys.length) return;
+    document.getElementById(sectionId).style.display = '';
+    const card = document.getElementById(cardId);
+    card.innerHTML = keys.map(k => {
+      const v = data[k];
+      return `<div class="summary-row"><span class="sk">${k}</span><span>${typeof v==='object'?JSON.stringify(v):v}</span></div>`;
+    }).join('');
+    if (isNew) {
+      card.style.borderColor = 'var(--accent)';
+      setTimeout(() => { card.style.borderColor = ''; }, 2000);
+    }
+  };
+  renderCard(state.summaryUser,      'custSummaryCard', 'custSummarySection');
+  renderCard(state.summaryAssistant, 'modSummaryCard',  'modSummarySection');
+}
+
+// ── SEND ──
+async function sendAnimateMe() {
+  if (state.loading) return;
+  document.getElementById('errBanner').classList.remove('show');
+  document.getElementById('emptyState').style.display = 'none';
+
+  const msg = { text: '', type: 'received', messageType: 'text', timestamp: new Date().toISOString() };
+  state.messages.push(msg);
+  state.ins++;
+
+  state.loading = true;
+  document.getElementById('sendBtn').disabled = true;
+  showTyping();
+
+  try {
+    const data = await callAPI();
+    await handleResponse(data);
+  } catch(err) {
+    hideTyping();
+    const b = document.getElementById('errBanner');
+    b.textContent = '✗ ' + err.message; b.classList.add('show');
+  } finally {
+    state.loading = false;
+    document.getElementById('sendBtn').disabled = false;
+  }
+}
+
+async function sendMessage() {
+  if (state.loading) return;
+  const input = document.getElementById('msgInput');
+  const text  = input.value.trim();
+  if (!text) return;
+
+  document.getElementById('errBanner').classList.remove('show');
+
+  const msg = { text, type:'received', messageType:'text', timestamp:new Date().toISOString() };
+  state.messages.push(msg); state.ins++;
+  appendMessage(msg);
+  input.value=''; input.style.height='auto';
+
+  state.loading=true;
+  document.getElementById('sendBtn').disabled=true;
+  showTyping();
+
+  try {
+    const data = await callAPI();
+    await handleResponse(data);
+  } catch(err) {
+    hideTyping();
+    const b=document.getElementById('errBanner');
+    b.textContent='✗ '+err.message; b.classList.add('show');
+  } finally {
+    state.loading=false;
+    document.getElementById('sendBtn').disabled=false;
+    document.getElementById('msgInput').focus();
+  }
+}
+
+function buildPayload() {
+  return {
+      origin: {
+        url: 'https://' + CONFIG.origin,
+        noCache: true,
+        pageType: 'https://' + CONFIG.origin,
+        clientType: 'server',
+        accountUsername: '216',
+        extensionVersion: '1.0.25',
+      },
+      keywords: [
+        ...(CONFIG.extraInfo ? [CONFIG.extraInfo] : []),
+        ...(CONFIG.datingApp ? ['Dating App'] : []),
+      ],
+      bypassCache: true,
+      siteInfos: {
+        ins: state.ins,
+        outs: state.outs,
+        chatId: state.chatId,
+        messages: state.messages,
+        minLength: CONFIG.minLength,
+        sessionStart: state.sessionStart,
+        customerNotes: CONFIG.customerNotes.trim() || '',
+        moderatorNotes: CONFIG.moderatorNotes.trim() || '',
+        sendToMaestro: false,
+        extraVariables: [],
+        ...(CONFIG.sourceLanguage && CONFIG.sourceLanguage !== 'de' ? { sourceLanguage: CONFIG.sourceLanguage } : {}),
+        customerInfo: {
+          age:                CONFIG.customer.birthDate?.age || CONFIG.customer.age,
+          name:               CONFIG.customer.name,
+          gender:             CONFIG.customer.gender,
+          height:             CONFIG.customer.height || '',
+          speaks:             CONFIG.sourceLanguage === 'de' ? '' : CONFIG.sourceLanguage,
+          smoking:            CONFIG.customer.smoking || '',
+          bodyType:           CONFIG.customer.bodyType || '',
+          eyeColor:           CONFIG.customer.eyeColor || '',
+          originId:           CONFIG.customer.username,
+          username:           CONFIG.customer.username,
+          hairColor:          CONFIG.customer.hairColor || '',
+          lookingFor:         CONFIG.customer.lookingFor || '',
+          occupation:         CONFIG.customer.occupation || '',
+          postalCode:         CONFIG.customer.postalCode || '',
+          profilePic:         CONFIG.customer.profilePic || '',
+          hasPictures:        CONFIG.customer.hasPictures || false,
+          hasProfilePic:      !!CONFIG.customer.profilePic,
+          relationshipStatus: CONFIG.customer.relationshipStatus || '',
+          hobbies:            CONFIG.customer.hobbies || '',
+          personality:        CONFIG.customer.personality || '',
+          education:          CONFIG.customer.education || '',
+          city:               CONFIG.customer.city || '',
+          country:            CONFIG.customer.country || '',
+          music:              CONFIG.customer.music || '',
+          movies:             CONFIG.customer.movies || '',
+        },
+        moderatorInfo: {
+          age:           CONFIG.moderator.birthDate?.age || CONFIG.moderator.age,
+          name:          CONFIG.moderator.name,
+          gender:        CONFIG.moderator.gender,
+          originId:      CONFIG.moderator.username,
+          username:      CONFIG.moderator.username,
+          profilePic:    CONFIG.moderator.profilePic || '',
+          hasPictures:   CONFIG.moderator.hasPictures || false,
+          hasProfilePic: !!CONFIG.moderator.profilePic,
+        },
+      }
+    };
+}
+
+async function callAPI() {
+  const payload = buildPayload();
+  console.log('📤 PAYLOAD:', JSON.stringify(payload, null, 2));
+  const res = await fetch(CONFIG.endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': CONFIG.apiKey },
+    body: JSON.stringify(payload),
+  });
+  const rawText = await res.text();
+  console.log('📥 RAW RESPONSE:', rawText);
+  if (!rawText) throw new Error(`Empty response (HTTP ${res.status})`);
+  const data = JSON.parse(rawText);
+  if (!data) throw new Error('Null response from API');
+  if (!res.ok) throw new Error(data.message || data.error || `HTTP ${res.status}`);
+  return data;
+}
+
+async function handleResponse(data) {
+  console.log('📋 PARSED RESPONSE:', data);
+  if (data.resText) {
+    const reply = { text: data.resText, type: 'sent', messageType: 'text', timestamp: new Date().toISOString() };
+    state.messages.push(reply); state.outs++;
+    hideTyping(); appendMessage(reply);
+  } else {
+    const alertMsg = data.alert ? `[API Alert: ${data.alert}]` : '[No resText in response]';
+    console.warn('⚠️', alertMsg, data);
+    hideTyping();
+    // Show alert in chat so it's visible
+    const errEl = document.createElement('div');
+    errEl.style.cssText = 'text-align:center;color:#ff6b6b;font-size:12px;padding:8px;';
+    errEl.textContent = alertMsg;
+    document.getElementById('messages').appendChild(errEl);
+    scrollBottom();
+  }
+  let hasNew = false;
+  if (data.summary?.user      && Object.keys(data.summary.user).length)      { Object.assign(state.summaryUser,      data.summary.user);      hasNew = true; }
+  if (data.summary?.assistant && Object.keys(data.summary.assistant).length) { Object.assign(state.summaryAssistant, data.summary.assistant); hasNew = true; }
+  updateSummaryCards(hasNew);
+}
+
+// ── INIT ──
+function initProfilePics() {
+  // Set moderator profile pic
+  if (CONFIG.moderator.profilePic) {
+    const ring = document.getElementById('modPicRing');
+    ring.innerHTML = `<img src="${CONFIG.moderator.profilePic}" onerror="this.parentElement.textContent='🎭'" />`;
+  }
+  // Set customer profile pic
+  if (CONFIG.customer.profilePic) {
+    const ring = document.getElementById('custPicRing');
+    ring.innerHTML = `<img src="${CONFIG.customer.profilePic}" onerror="this.parentElement.textContent='👤'" />`;
+  }
+  // Render private gallery
+  const gallery = CONFIG.moderator.privateGallery || [];
+  const grid = document.getElementById('privateGalleryGrid');
+  if (grid && gallery.length) {
+    grid.innerHTML = gallery.map(src =>
+      `<img src="${src}" onerror="this.style.display='none'" onclick="openLightboxSrc('${src}')" title="Click to enlarge" />`
+    ).join('');
+  }
+}
+
+function custPicClick() {
+  const ring = document.getElementById('custPicRing');
+  const hasImg = ring.querySelector('img');
+  if (hasImg) {
+    openLightboxSrc(hasImg.src);
+  } else {
+    document.getElementById('custFileInput').click();
+  }
+}
+function custFileChosen(input) {
+  if (!input.files || !input.files[0]) return;
+  const url = URL.createObjectURL(input.files[0]);
+  const ring = document.getElementById('custPicRing');
+  ring.innerHTML = `<img src="${url}" onerror="this.parentElement.textContent='👤'" />`;
+  CONFIG.customer.profilePic = url;
+  // Switch overlay text to "Change"
+  const ov = document.getElementById('custPicOverlay');
+  if (ov) ov.textContent = 'Change';
+}
+function openLightbox(ringId) {
+  const img = document.querySelector('#' + ringId + ' img');
+  if (!img) return;
+  openLightboxSrc(img.src);
+}
+function openLightboxSrc(src) {
+  document.getElementById('lightboxImg').src = src;
+  document.getElementById('lightbox').classList.add('show');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('show');
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+initProfilePics();
+applyUILabels('de');
+</script>
+</body>
+</html>
