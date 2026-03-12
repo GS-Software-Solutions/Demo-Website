@@ -6186,6 +6186,13 @@ async function handleResponse(data) {
   const summary = data.translation?.translatedSummary || data.summary;
   if (summary?.user      && Object.keys(summary.user).length)      { Object.assign(state.summaryUser,      summary.user);      hasNew = true; }
   if (summary?.assistant && Object.keys(summary.assistant).length) { Object.assign(state.summaryAssistant, summary.assistant); hasNew = true; }
+  if (hasNew) {
+    const toText = obj => Object.entries(obj).map(([k, v]) => `${k}: ${typeof v === 'object' ? JSON.stringify(v) : v}`).join('\n');
+    const custEl = document.getElementById('custNotesEl');
+    const modEl  = document.getElementById('modNotesEl');
+    if (custEl) { custEl.innerText = toText(state.summaryUser);      CONFIG.customerNotes  = custEl.innerText; }
+    if (modEl)  { modEl.innerText  = toText(state.summaryAssistant); CONFIG.moderatorNotes = modEl.innerText; }
+  }
   updateSummaryCards(hasNew);
   saveToStorage();
 }
