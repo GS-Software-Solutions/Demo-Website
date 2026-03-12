@@ -12,14 +12,16 @@ import DatingModal from '@/components/modals/DatingModal';
 import GenderMismatchModal from '@/components/modals/GenderMismatchModal';
 import LoadingScreen from '@/components/LoadingScreen';
 
-const ACCESS_CODE = 'demo2026';
+const AUTH_EMAIL = 'test@sexytalk.io';
+const AUTH_PASS = 'IamSexy';
 const AUTH_KEY = 'chatcraft_auth';
 
 export default function Home() {
 
   const [authed, setAuthed] = useState(false);
-  const [codeInput, setCodeInput] = useState('');
-  const [codeError, setCodeError] = useState(false);
+  const [emailInput, setEmailInput] = useState('');
+  const [passInput, setPassInput] = useState('');
+  const [loginError, setLoginError] = useState(false);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [showLangWarn, setShowLangWarn] = useState(false);
   const [showDatingModal, setShowDatingModal] = useState(false);
@@ -27,7 +29,7 @@ export default function Home() {
   const [splashDone, setSplashDone] = useState(false);
 
   useEffect(() => {
-    if (localStorage.getItem(AUTH_KEY) === ACCESS_CODE) setAuthed(true);
+    if (localStorage.getItem(AUTH_KEY) === 'true') setAuthed(true);
   }, []);
 
   useEffect(() => {
@@ -35,13 +37,13 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, []);
 
-  function handleCodeSubmit() {
-    if (codeInput.trim() === ACCESS_CODE) {
-      localStorage.setItem(AUTH_KEY, ACCESS_CODE);
+  function handleLogin() {
+    if (emailInput.trim().toLowerCase() === AUTH_EMAIL && passInput === AUTH_PASS) {
+      localStorage.setItem(AUTH_KEY, 'true');
       setAuthed(true);
-      setCodeError(false);
+      setLoginError(false);
     } else {
-      setCodeError(true);
+      setLoginError(true);
     }
   }
 
@@ -58,18 +60,26 @@ export default function Home() {
       <div className="access-gate">
         <div className="access-box">
           <div style={{ fontSize: 32, marginBottom: 12 }}>{'\uD83D\uDD12'}</div>
-          <h2>Access Code Required</h2>
-          <p>Enter the access code to continue</p>
+          <h2>Login</h2>
+          <p>Enter your credentials to continue</p>
           <input
-            type="password"
-            value={codeInput}
-            onChange={e => { setCodeInput(e.target.value); setCodeError(false); }}
-            onKeyDown={e => e.key === 'Enter' && handleCodeSubmit()}
-            placeholder="Enter code..."
+            type="email"
+            value={emailInput}
+            onChange={e => { setEmailInput(e.target.value); setLoginError(false); }}
+            onKeyDown={e => e.key === 'Enter' && handleLogin()}
+            placeholder="Email"
             autoFocus
           />
-          {codeError && <span className="access-error">Invalid code</span>}
-          <button onClick={handleCodeSubmit}>Enter</button>
+          <input
+            type="password"
+            value={passInput}
+            onChange={e => { setPassInput(e.target.value); setLoginError(false); }}
+            onKeyDown={e => e.key === 'Enter' && handleLogin()}
+            placeholder="Password"
+            style={{ marginTop: 10 }}
+          />
+          {loginError && <span className="access-error">Invalid email or password</span>}
+          <button onClick={handleLogin}>Log in</button>
         </div>
       </div>
     );
