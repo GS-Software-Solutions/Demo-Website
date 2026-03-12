@@ -184,7 +184,7 @@ const STORAGE_KEY = 'chatcraft_store';
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [store, dispatch] = useReducer(reducer, { config: DEFAULT_CONFIG, state: initialState() });
   const modIndexRef = useRef(0);
-  const modPhotoIndexRef = useRef(-1);
+  const modPhotoIndexRef = useRef(0);
   const hydrated = useRef(false);
 
   // Restore from localStorage on mount (SSR-safe)
