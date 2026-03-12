@@ -544,7 +544,7 @@ window.addEventListener('load', () => {
     <span class="lang-label" data-i18n="labelLanguage">Language</span>
     <select id="langSelect" onchange="applyLanguage(this.value)">
       <option value="de">🇩🇪 German</option>
-      <option value="en">🇬🇧 English</option>
+      <option value="en" selected>🇬🇧 English</option>
       <option value="fr">🇫🇷 French</option>
       <option value="es">🇪🇸 Spanish</option>
       <option value="it">🇮🇹 Italian</option>
@@ -6190,7 +6190,7 @@ initProfilePics();
 // Sync modIndex to current moderator
 modIndex = RANDOM_MODERATORS.findIndex(m => m.name === CONFIG.moderator.name);
 if (modIndex < 0) modIndex = 0;
-applyUILabels(CONFIG.sourceLanguage);
+applyLanguage(CONFIG.sourceLanguage);
 // Restore dating banner
 if (CONFIG.datingApp) {
   document.getElementById('datingBanner').classList.add('show');
