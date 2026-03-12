@@ -40,6 +40,8 @@ export default function Home() {
     if (codeInput.trim() === ACCESS_CODE) {
       localStorage.setItem(AUTH_KEY, ACCESS_CODE);
       setAuthed(true);
+      setSplashDone(false);
+      setTimeout(() => setSplashDone(true), 5000);
       setCodeError(false);
     } else {
       setCodeError(true);
