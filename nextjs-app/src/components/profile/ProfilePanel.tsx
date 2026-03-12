@@ -195,6 +195,7 @@ export default function ProfilePanel({ side, onLightbox, onOpenDatingModal, onGe
         const profileGender = config.customer.gender?.toLowerCase() || 'male';
         if (detectedGender && detectedGender !== 'unknown' && detectedGender !== profileGender) {
           setGenderResult('mismatch');
+          onGenderMismatch?.();
         } else {
           setGenderResult('match');
           setTimeout(() => setGenderResult(null), 2000);
@@ -241,11 +242,6 @@ export default function ProfilePanel({ side, onLightbox, onOpenDatingModal, onGe
               {isCustomer && genderResult === 'match' && (
                 <div className="pic-result pic-result-ok">
                   {'\u2713'} Approved
-                </div>
-              )}
-              {isCustomer && genderResult === 'mismatch' && (
-                <div className="pic-result pic-result-fail">
-                  {'\u2717'} Gender Mismatch
                 </div>
               )}
             </div>
