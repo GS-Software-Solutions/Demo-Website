@@ -1405,7 +1405,7 @@ function applyLanguage(code) {
 
   // Update city/country to match language (only if no messages yet)
   if (state.messages.length === 0) {
-    const locations = LANG_LOCATIONS[code] || LANG_LOCATIONS['de'];
+    const locations = LANG_LOCATIONS[code] || LANG_LOCATIONS['en'];
     const custLoc = pick(locations);
     const modLoc = pick(locations);
     CONFIG.customer.city = custLoc.city; CONFIG.customer.postalCode = custLoc.postalCode; CONFIG.customer.country = custLoc.country;
@@ -1421,8 +1421,8 @@ function applyLanguage(code) {
     });
 
     // Also static translate the profile text variables if they haven't sent a message
-    const poolCust = RANDOM_CUSTOMERS[code] || RANDOM_CUSTOMERS['en'] || RANDOM_CUSTOMERS['de'];
-    const poolMod = RANDOM_MODERATORS[code] || RANDOM_MODERATORS['en'] || RANDOM_MODERATORS['de'];
+    const poolCust = RANDOM_CUSTOMERS[code] || RANDOM_CUSTOMERS['en'];
+    const poolMod = RANDOM_MODERATORS[code] || RANDOM_MODERATORS['en'];
     if (poolCust && poolMod) {
       // Find the currently active generated profile matching the name, or just use the first/random one
       let cSync = poolCust.find(p => p.name === CONFIG.customer.name) || pick(poolCust) || poolCust[0];
@@ -1454,7 +1454,7 @@ const CONFIG = {
   endpoint:  window.location.hostname === 'localhost' ? 'http://localhost:3001' : '/api/proxy',
   origin:         'kizzle.net',
   minLength:      100,
-  sourceLanguage: 'de',
+  sourceLanguage: 'en',
   extraInfo: '',
   datingApp: false,
   datingAppCustomerInfo: '',
@@ -5453,11 +5453,11 @@ function pick(arr) { return arr && arr.length ? arr[Math.floor(Math.random() * a
 let modIndex = 0; // tracks which moderator is next
 
 function randomizeProfile(who) {
-  const code = CONFIG.sourceLanguage || 'de';
+  const code = CONFIG.sourceLanguage || 'en';
   const poolBase = who === 'customer' ? RANDOM_CUSTOMERS : RANDOM_MODERATORS;
   
-  // fallback to English or German if the language isn't present in static data
-  const pool = poolBase[code] || poolBase['en'] || poolBase['de'];
+  // fallback to English if the language isn't present in static data
+  const pool = poolBase[code] || poolBase['en'];
   let chosen;
 
   if (who === 'moderator') {
@@ -5512,7 +5512,7 @@ function randomizeProfile(who) {
   };
 
   // Override city/country based on current language
-  const locations = LANG_LOCATIONS[code] || LANG_LOCATIONS['de'];
+  const locations = LANG_LOCATIONS[code] || LANG_LOCATIONS['en'];
   const loc = pick(locations);
   if (loc) {
     newProfile.city = loc.city;
@@ -6017,7 +6017,7 @@ function buildPayload() {
         sendToMaestro: false,
         ...(CONFIG.datingApp ? { extraVariables: [{ key: 'Dating App', value: true }] } : {}),
         moderatorNotes: [CONFIG.moderatorNotes.trim(), CONFIG.datingApp && CONFIG.datingAppModeratorInfo?.trim() ? 'Previous Dating App Info: ' + CONFIG.datingAppModeratorInfo.trim() : '', CONFIG.datingApp && CONFIG.datingAppSpamMessage?.trim() ? 'Spam Message (reason she cannot text on dating app): ' + CONFIG.datingAppSpamMessage.trim() : ''].filter(Boolean).join('\n') || '',
-        ...(CONFIG.sourceLanguage && CONFIG.sourceLanguage !== 'de' ? { sourceLanguage: ({en:'English',fr:'French',es:'Spanish',it:'Italian',nl:'Dutch',pt:'Portuguese',pl:'Polish',tr:'Turkish',ru:'Russian',sv:'Swedish',da:'Danish',no:'Norwegian',fi:'Finnish',ro:'Romanian',cs:'Czech',hu:'Hungarian'})[CONFIG.sourceLanguage] || CONFIG.sourceLanguage } : {}),
+        ...(CONFIG.sourceLanguage && CONFIG.sourceLanguage !== 'en' ? { sourceLanguage: ({de:'German',fr:'French',es:'Spanish',it:'Italian',nl:'Dutch',pt:'Portuguese',pl:'Polish',tr:'Turkish',ru:'Russian',sv:'Swedish',da:'Danish',no:'Norwegian',fi:'Finnish',ro:'Romanian',cs:'Czech',hu:'Hungarian'})[CONFIG.sourceLanguage] || CONFIG.sourceLanguage } : {}),
       }
     };
 }
@@ -6134,7 +6134,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbo
       Object.assign(CONFIG.moderator, savedConfig.moderator || {});
       CONFIG.customerNotes  = savedConfig.customerNotes  || '';
       CONFIG.moderatorNotes = savedConfig.moderatorNotes || '';
-      CONFIG.sourceLanguage = savedConfig.sourceLanguage || 'de';
+      CONFIG.sourceLanguage = savedConfig.sourceLanguage || 'en';
       CONFIG.minLength      = savedConfig.minLength      || 100;
       CONFIG.datingApp      = savedConfig.datingApp      || false;
       CONFIG.datingAppCustomerInfo = savedConfig.datingAppCustomerInfo || '';
