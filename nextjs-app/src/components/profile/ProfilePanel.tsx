@@ -129,28 +129,31 @@ export default function ProfilePanel({ side, onLightbox, onOpenDatingModal, onGe
       personality: chosen.personality,
     };
 
-    // Override city/country from language locations
+    // City/country: sequential for moderator, random for customer
     const locations = LANG_LOCATIONS[code] || LANG_LOCATIONS['en'];
-    const loc = pick(locations);
-    if (loc) {
-      newProfile.city = loc.city;
-      newProfile.postalCode = loc.postalCode;
-      newProfile.country = loc.country;
+    if (isMod) {
+      const loc = locations[modIndexRef.current % locations.length];
+      if (loc) {
+        newProfile.city = loc.city;
+        newProfile.postalCode = loc.postalCode;
+        newProfile.country = loc.country;
+      }
+    } else {
+      const loc = pick(locations);
+      if (loc) {
+        newProfile.city = loc.city;
+        newProfile.postalCode = loc.postalCode;
+        newProfile.country = loc.country;
+      }
     }
 
-    // For moderator: cycle through photo sets independently
+    // For moderator: cycle through photo sets in sync with data index
     if (isMod && MODERATOR_PHOTO_SETS.length > 0) {
-      modPhotoIndexRef.current = (modPhotoIndexRef.current + 1) % MODERATOR_PHOTO_SETS.length;
-      const photoSet = MODERATOR_PHOTO_SETS[modPhotoIndexRef.current];
+      const photoSet = MODERATOR_PHOTO_SETS[modIndexRef.current % MODERATOR_PHOTO_SETS.length];
       newProfile.profilePic = photoSet.profilePic;
       newProfile.hasProfilePic = true;
       newProfile.hasPictures = true;
       newProfile.privateGallery = photoSet.gallery || [];
-    } else if (isMod) {
-      newProfile.profilePic = config[side].profilePic;
-      newProfile.hasProfilePic = config[side].hasProfilePic;
-      newProfile.hasPictures = config[side].hasPictures;
-      newProfile.privateGallery = config[side].privateGallery || [];
     }
 
     dispatch({ type: 'RANDOMIZE_PROFILE', payload: { who: side, profile: newProfile } });
