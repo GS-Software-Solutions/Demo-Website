@@ -12,6 +12,7 @@ interface ProfilePanelProps {
   side: 'customer' | 'moderator';
   onLightbox: (src: string) => void;
   onOpenDatingModal?: () => void;
+  onGenderMismatch?: () => void;
 }
 
 const PROFILE_FIELDS: Array<{ key: string; labelKey: string; customerOnly?: boolean }> = [
@@ -37,7 +38,7 @@ const PROFILE_FIELDS: Array<{ key: string; labelKey: string; customerOnly?: bool
   { key: 'music', labelKey: 'keyMusic' },
 ];
 
-export default function ProfilePanel({ side, onLightbox, onOpenDatingModal }: ProfilePanelProps) {
+export default function ProfilePanel({ side, onLightbox, onOpenDatingModal, onGenderMismatch }: ProfilePanelProps) {
   const { config, state, dispatch, modIndexRef, modPhotoIndexRef } = useApp();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -169,11 +170,33 @@ export default function ProfilePanel({ side, onLightbox, onOpenDatingModal }: Pr
     }
   }
 
-  function handleFileChosen(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleFileChosen(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     const url = URL.createObjectURL(file);
     dispatch({ type: 'SET_CUSTOMER_PIC', payload: url });
+
+    // Convert to base64 and check gender
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const base64 = reader.result as string;
+      try {
+        const res = await fetch('/api/gendercheck', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: base64 }),
+        });
+        const data = await res.json();
+        const detectedGender = data.gender?.toLowerCase();
+        const profileGender = config.customer.gender?.toLowerCase() || 'male';
+        if (detectedGender && detectedGender !== 'unknown' && detectedGender !== profileGender) {
+          onGenderMismatch?.();
+        }
+      } catch (err) {
+        console.warn('Gender check failed:', err);
+      }
+    };
+    reader.readAsDataURL(file);
   }
 
   const summaryData = isCustomer ? state.summaryUser : state.summaryAssistant;

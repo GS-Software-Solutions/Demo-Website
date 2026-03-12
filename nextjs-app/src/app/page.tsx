@@ -8,6 +8,7 @@ import ChatColumn from '@/components/chat/ChatColumn';
 import Lightbox from '@/components/modals/Lightbox';
 import LangWarningModal from '@/components/modals/LangWarningModal';
 import DatingModal from '@/components/modals/DatingModal';
+import GenderMismatchModal from '@/components/modals/GenderMismatchModal';
 import LoadingScreen from '@/components/LoadingScreen';
 
 export default function Home() {
@@ -15,6 +16,7 @@ export default function Home() {
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [showLangWarn, setShowLangWarn] = useState(false);
   const [showDatingModal, setShowDatingModal] = useState(false);
+  const [showGenderWarn, setShowGenderWarn] = useState(false);
   const [splashDone, setSplashDone] = useState(false);
 
   useEffect(() => {
@@ -37,6 +39,7 @@ export default function Home() {
           side="customer"
           onLightbox={setLightboxSrc}
           onOpenDatingModal={() => setShowDatingModal(true)}
+          onGenderMismatch={() => setShowGenderWarn(true)}
         />
         <ChatColumn
           onLightbox={setLightboxSrc}
@@ -50,6 +53,7 @@ export default function Home() {
 
       <LangWarningModal show={showLangWarn} onClose={() => setShowLangWarn(false)} />
       <DatingModal show={showDatingModal} onClose={() => setShowDatingModal(false)} />
+      <GenderMismatchModal show={showGenderWarn} onClose={() => setShowGenderWarn(false)} />
     </>
   );
 }
