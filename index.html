@@ -6017,7 +6017,7 @@ function buildPayload() {
         sendToMaestro: false,
         ...(CONFIG.datingApp ? { extraVariables: [{ key: 'Dating App', value: true }] } : {}),
         moderatorNotes: [CONFIG.moderatorNotes.trim(), CONFIG.datingApp && CONFIG.datingAppModeratorInfo?.trim() ? 'Previous Dating App Info: ' + CONFIG.datingAppModeratorInfo.trim() : '', CONFIG.datingApp && CONFIG.datingAppSpamMessage?.trim() ? 'Spam Message (reason she cannot text on dating app): ' + CONFIG.datingAppSpamMessage.trim() : ''].filter(Boolean).join('\n') || '',
-        ...(CONFIG.sourceLanguage ? { sourceLanguage: ({de:'German',en:'English',fr:'French',es:'Spanish',it:'Italian',nl:'Dutch',pt:'Portuguese',pl:'Polish',tr:'Turkish',ru:'Russian',sv:'Swedish',da:'Danish',no:'Norwegian',fi:'Finnish',ro:'Romanian',cs:'Czech',hu:'Hungarian'})[CONFIG.sourceLanguage] || CONFIG.sourceLanguage } : {}),
+        ...(CONFIG.sourceLanguage ? { sourceLanguage: ({de:'German',en:'English',fr:'French',es:'Spanish',it:'Italian',nl:'Dutch',pt:'Portuguese',pl:'Polish',tr:'Turkish',ru:'Russian',sv:'Swedish',da:'Danish',no:'Norwegian',fi:'Finnish',ro:'Romanian',cs:'Czech',hu:'Hungarian'})[CONFIG.sourceLanguage]?.toLowerCase() || CONFIG.sourceLanguage.toLowerCase() } : {}),
       }
     };
 }
