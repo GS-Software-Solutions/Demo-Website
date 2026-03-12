@@ -195,6 +195,8 @@ export default function ProfilePanel({ side, onLightbox, onOpenDatingModal, onGe
         const profileGender = config.customer.gender?.toLowerCase() || 'male';
         if (detectedGender && detectedGender !== 'unknown' && detectedGender !== profileGender) {
           setGenderResult('mismatch');
+          dispatch({ type: 'SET_CUSTOMER_PIC', payload: '' });
+          if (fileInputRef.current) fileInputRef.current.value = '';
           onGenderMismatch?.();
         } else {
           setGenderResult('match');
