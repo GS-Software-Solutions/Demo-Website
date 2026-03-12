@@ -1,4 +1,8 @@
 {
+  "framework": null,
+  "outputDirectory": ".",
+  "buildCommand": "echo 'No build command needed'",
+  "installCommand": "echo 'No install command needed'",
   "rewrites": [
     { "source": "/api/proxy", "destination": "/api/proxy" },
     { "source": "/api/langcheck", "destination": "/api/langcheck" }
