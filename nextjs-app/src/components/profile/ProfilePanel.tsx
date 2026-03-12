@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useApp } from '@/lib/store/AppContext';
 import { getUI, UI_LABELS } from '@/data/ui-labels';
 import { LANG_LOCATIONS } from '@/data/lang-locations';
@@ -170,13 +170,17 @@ export default function ProfilePanel({ side, onLightbox, onOpenDatingModal, onGe
     }
   }
 
+  const [analyzing, setAnalyzing] = useState(false);
+  const [genderResult, setGenderResult] = useState<'match' | 'mismatch' | null>(null);
+
   async function handleFileChosen(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     const url = URL.createObjectURL(file);
     dispatch({ type: 'SET_CUSTOMER_PIC', payload: url });
+    setAnalyzing(true);
+    setGenderResult(null);
 
-    // Convert to base64 and check gender
     const reader = new FileReader();
     reader.onload = async () => {
       const base64 = reader.result as string;
@@ -190,13 +194,26 @@ export default function ProfilePanel({ side, onLightbox, onOpenDatingModal, onGe
         const detectedGender = data.gender?.toLowerCase();
         const profileGender = config.customer.gender?.toLowerCase() || 'male';
         if (detectedGender && detectedGender !== 'unknown' && detectedGender !== profileGender) {
-          onGenderMismatch?.();
+          setGenderResult('mismatch');
+        } else {
+          setGenderResult('match');
+          setTimeout(() => setGenderResult(null), 2000);
         }
       } catch (err) {
         console.warn('Gender check failed:', err);
+        setGenderResult('match');
+        setTimeout(() => setGenderResult(null), 2000);
+      } finally {
+        setAnalyzing(false);
       }
     };
     reader.readAsDataURL(file);
+  }
+
+  function handleDeletePic() {
+    dispatch({ type: 'SET_CUSTOMER_PIC', payload: '' });
+    setGenderResult(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   }
 
   const summaryData = isCustomer ? state.summaryUser : state.summaryAssistant;
@@ -215,10 +232,31 @@ export default function ProfilePanel({ side, onLightbox, onOpenDatingModal, onGe
               ) : (
                 isCustomer ? '\u{1F464}' : '\u{1F3AD}'
               )}
+              {isCustomer && analyzing && (
+                <div className="pic-analyzing">
+                  <div className="pic-analyzing-spinner" />
+                  <span>Analyzing...</span>
+                </div>
+              )}
+              {isCustomer && genderResult === 'match' && (
+                <div className="pic-result pic-result-ok">
+                  {'\u2713'} Approved
+                </div>
+              )}
+              {isCustomer && genderResult === 'mismatch' && (
+                <div className="pic-result pic-result-fail">
+                  {'\u2717'} Gender Mismatch
+                </div>
+              )}
             </div>
             <div className="pic-overlay" onClick={handlePicClick}>
               {profile.profilePic ? 'View' : 'Upload'}
             </div>
+            {isCustomer && profile.profilePic && (
+              <button className="pic-delete-btn" onClick={handleDeletePic} title="Remove photo">
+                {'\u2715'}
+              </button>
+            )}
             <div className="online-badge" />
           </div>
 
