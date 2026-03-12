@@ -377,9 +377,13 @@ body {
 
 .msg-row {
   display: flex; gap: 10px; max-width: 75%;
-  animation: msgIn .25s cubic-bezier(.16,1,.3,1);
+  animation: msgIn .35s cubic-bezier(.16,1,.3,1);
 }
-@keyframes msgIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+.msg-row.customer { animation: msgInLeft .35s cubic-bezier(.16,1,.3,1); }
+.msg-row.moderator { animation: msgInRight .35s cubic-bezier(.16,1,.3,1); }
+@keyframes msgIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+@keyframes msgInLeft { from{opacity:0;transform:translateX(-16px) translateY(6px)} to{opacity:1;transform:translateX(0) translateY(0)} }
+@keyframes msgInRight { from{opacity:0;transform:translateX(16px) translateY(6px)} to{opacity:1;transform:translateX(0) translateY(0)} }
 .msg-row.customer  { align-self: flex-start; }
 .msg-row.moderator { align-self: flex-end; flex-direction: row-reverse; }
 
@@ -471,20 +475,31 @@ body {
   background:linear-gradient(135deg,#ff2d6e,#ff6b9d);border:none;border-radius:14px;
   width:46px;height:46px;display:flex;align-items:center;justify-content:center;
   cursor:pointer;flex-shrink:0;box-shadow:0 4px 16px var(--accent-glow);
-  transition:all .2s ease;
+  transition:all .2s ease;position:relative;overflow:visible;
 }
-.send-btn:hover{box-shadow:0 6px 24px var(--accent-glow-strong); transform:translateY(-1px);}
-.send-btn:active{transform:scale(.92) translateY(0)}
-.send-btn.pulse{animation:sendPulse .45s cubic-bezier(.4,0,.2,1)}
+.send-btn:hover{box-shadow:0 6px 24px var(--accent-glow-strong); transform:translateY(-2px);}
+.send-btn:active{transform:scale(.85) translateY(0)}
+.send-btn.pulse{animation:sendPulse .55s cubic-bezier(.4,0,.2,1)}
+.send-btn.pulse::after{
+  content:'';position:absolute;inset:-4px;border-radius:18px;
+  background:radial-gradient(circle,rgba(255,45,110,.45) 0%,transparent 70%);
+  animation:sendRipple .65s ease-out forwards;pointer-events:none;
+}
+@keyframes sendRipple{
+  0%{transform:scale(.8);opacity:1}
+  100%{transform:scale(2.4);opacity:0}
+}
 @keyframes sendPulse{
-  0%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,45,110,.5)}
-  20%{transform:scale(.88)}
-  45%{transform:scale(1.08);box-shadow:0 0 0 14px rgba(255,45,110,0)}
-  70%{transform:scale(.97)}
+  0%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,45,110,.6)}
+  12%{transform:scale(.78)}
+  35%{transform:scale(1.18);box-shadow:0 0 0 18px rgba(255,45,110,0)}
+  55%{transform:scale(.94)}
+  75%{transform:scale(1.04)}
   100%{transform:scale(1);box-shadow:0 4px 16px var(--accent-glow)}
 }
 .send-btn:disabled{opacity:.3;cursor:not-allowed;transform:none;box-shadow:none}
-.send-btn svg{width:20px;height:20px;fill:#fff}
+.send-btn svg{width:20px;height:20px;fill:#fff;transition:transform .2s}
+.send-btn:active svg{transform:translateX(2px) scale(.9)}
 
 /* Loading screen */
 @keyframes spinLoader{to{transform:rotate(360deg)}}

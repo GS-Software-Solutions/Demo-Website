@@ -4,9 +4,9 @@ import { mergeTrailingCustomerMsgs, LANG_FULL } from './utils';
 export function buildPayload(config: AppConfig, state: AppState) {
   return {
     origin: {
-      url: config.datingApp && state.ins <= 3 ? 'https://v2-teddy-sys-mod.de' : 'https://' + config.origin,
+      url: config.datingApp && state.ins <= 3 ? 'https://teddy-sys-mod.de' : 'https://' + config.origin,
       noCache: true,
-      pageType: config.datingApp && state.ins <= 3 ? 'https://v2-teddy-sys-mod.de' : 'https://' + config.origin,
+      pageType: config.datingApp && state.ins <= 3 ? 'https://teddy-sys-mod.de' : 'https://' + config.origin,
       clientType: 'server',
       accountUsername: '216',
       extensionVersion: '1.0.25',
