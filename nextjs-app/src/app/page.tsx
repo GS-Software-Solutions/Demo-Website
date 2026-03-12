@@ -20,6 +20,7 @@ export default function Home() {
   const [authed, setAuthed] = useState(false);
   const [codeInput, setCodeInput] = useState('');
   const [codeError, setCodeError] = useState(false);
+  const [mobileTab, setMobileTab] = useState<'customer' | 'chat' | 'moderator'>('chat');
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [showLangWarn, setShowLangWarn] = useState(false);
   const [showDatingModal, setShowDatingModal] = useState(false);
@@ -85,7 +86,7 @@ export default function Home() {
 
       <DatingBanner onOpenModal={() => setShowDatingModal(true)} />
 
-      <div className="workspace">
+      <div className="workspace" data-active-tab={mobileTab}>
         <ProfilePanel
           side="customer"
           onLightbox={setLightboxSrc}
@@ -100,6 +101,18 @@ export default function Home() {
           side="moderator"
           onLightbox={setLightboxSrc}
         />
+      </div>
+
+      <div className="mobile-tab-bar">
+        <button className={mobileTab === 'customer' ? 'active' : ''} onClick={() => setMobileTab('customer')}>
+          Customer
+        </button>
+        <button className={mobileTab === 'chat' ? 'active' : ''} onClick={() => setMobileTab('chat')}>
+          Chat
+        </button>
+        <button className={mobileTab === 'moderator' ? 'active' : ''} onClick={() => setMobileTab('moderator')}>
+          Moderator
+        </button>
       </div>
 
       <LangWarningModal show={showLangWarn} onClose={() => setShowLangWarn(false)} />

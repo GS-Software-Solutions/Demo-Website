@@ -579,3 +579,82 @@ body {
 /* Loading screen */
 @keyframes spinLoader{to{transform:rotate(360deg)}}
 @keyframes floatEmoji{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+
+/* Mobile tab bar - hidden on desktop */
+.mobile-tab-bar { display: none; }
+
+/* ========== MOBILE RESPONSIVE ========== */
+@media (max-width: 768px) {
+  /* Tab bar */
+  .mobile-tab-bar {
+    display: flex;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 52px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    z-index: 50;
+  }
+  .mobile-tab-bar button {
+    flex: 1;
+    background: none; border: none;
+    color: var(--text-muted);
+    font-size: 12px; font-family: inherit; font-weight: 600;
+    cursor: pointer; transition: color .2s;
+  }
+  .mobile-tab-bar button.active {
+    color: var(--accent);
+    box-shadow: inset 0 -2px 0 var(--accent);
+  }
+
+  /* Body padding for fixed tab bar */
+  body { padding-bottom: 52px; }
+
+  /* Topbar responsive */
+  .topbar {
+    height: auto; min-height: 44px;
+    flex-wrap: wrap; padding: 8px 12px; gap: 8px;
+  }
+  .topbar-logo { font-size: 13px; }
+  .topbar-logo span { font-size: 10px; }
+  .topbar-divider { display: none; }
+  .lang-wrap { gap: 4px; }
+  #langSelect, #minLengthInput { font-size: 11px; padding: 4px 8px; }
+  #minLengthInput { width: 50px; }
+  .status-pill { gap: 8px; flex-wrap: wrap; }
+
+  /* Workspace: show only active tab */
+  .workspace {
+    flex: 1; overflow: hidden;
+  }
+  .workspace .profile-panel,
+  .workspace .chat-col {
+    display: none;
+  }
+  .workspace[data-active-tab="customer"] .profile-panel.left {
+    display: flex; width: 100%; min-width: 0;
+  }
+  .workspace[data-active-tab="chat"] .chat-col {
+    display: flex; width: 100%; min-width: 0;
+  }
+  .workspace[data-active-tab="moderator"] .profile-panel.right {
+    display: flex; width: 100%; min-width: 0;
+  }
+
+  /* Profile panel full width */
+  .profile-panel {
+    width: 100%; border-left: none; border-right: none;
+  }
+  .profile-scroll { padding: 16px 14px; }
+
+  /* Chat adjustments */
+  .chat-messages { padding: 16px 12px; }
+  .msg-row { max-width: 90%; }
+  .input-bar { padding: 10px 12px 16px; }
+
+  /* Dating banner */
+  .dating-banner { font-size: 11px; padding: 6px 12px; }
+
+  /* Gallery grid */
+  .gallery-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+}
