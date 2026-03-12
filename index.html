@@ -3,122 +3,202 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Chat Moderation</title>
+  <title>SexyTalk.io | Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #080808;
-      --surface: #111111;
-      --surface2: #1a1a1a;
-      --border: #222222;
+      --bg: #060608;
+      --surface: #0e0e12;
+      --surface2: #16161c;
+      --surface3: #1e1e26;
+      --border: #242430;
+      --border-light: #2e2e3a;
       --accent: #ff2d6e;
-      --accent-glow: rgba(255, 45, 110, 0.2);
-      --text: #f0f0f0;
-      --text-muted: #555555;
+      --accent-light: #ff6b9d;
+      --accent-glow: rgba(255, 45, 110, 0.15);
+      --accent-glow-strong: rgba(255, 45, 110, 0.35);
+      --text: #eeeef0;
+      --text-secondary: #a0a0b0;
+      --text-muted: #55556a;
       --radius: 14px;
+      --radius-sm: 10px;
+      --shadow-sm: 0 2px 8px rgba(0,0,0,.3);
+      --shadow-md: 0 4px 20px rgba(0,0,0,.4);
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: var(--bg);
       color: var(--text);
       height: 100dvh;
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      -webkit-font-smoothing: antialiased;
     }
 
     /* ── TOP BAR ── */
     .topbar {
-      height: 48px;
+      height: 52px;
       background: var(--surface);
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
-      padding: 0 20px;
-      gap: 10px;
+      padding: 0 22px;
+      gap: 14px;
       flex-shrink: 0;
+      box-shadow: var(--shadow-sm);
+      z-index: 10;
     }
-    .topbar-logo { font-size: 14px; font-weight: 700; color: var(--accent); letter-spacing: .04em; }
-    .topbar-logo span { color: var(--text-muted); font-weight: 400; }
+    .topbar-logo {
+      font-size: 15px; font-weight: 700; color: var(--accent);
+      letter-spacing: .03em;
+      text-shadow: 0 0 20px var(--accent-glow);
+    }
+    .topbar-logo span { color: var(--text-muted); font-weight: 400; font-size: 13px; }
     .topbar-divider { flex: 1; }
     .status-pill { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); }
     .status-dot {
       width: 7px; height: 7px; border-radius: 50%;
-      background: var(--accent); box-shadow: 0 0 8px var(--accent-glow);
+      background: #22c55e; box-shadow: 0 0 10px rgba(34,197,94,.4);
       animation: pulse 2s infinite;
     }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
     .lang-wrap { display:flex; align-items:center; gap:8px; }
-    .lang-label { font-size:12px; color:var(--text-muted); }
-    #langSelect {
+    .lang-label { font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.06em; font-weight:600; }
+    #langSelect, #minLengthInput {
       background: var(--surface2);
       border: 1px solid var(--border);
       border-radius: 8px;
       color: var(--text);
-      font-size: 13px;
-      padding: 5px 10px;
+      font-size: 12px;
+      font-family: inherit;
+      padding: 6px 10px;
       outline: none;
       cursor: pointer;
-      transition: border-color .2s;
+      transition: border-color .2s, box-shadow .2s;
     }
-    #langSelect:hover { border-color: #444; }
-    #langSelect:focus { border-color: var(--accent); }
-    #minLengthInput {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text);
-      font-size: 13px;
-      padding: 5px 10px;
-      outline: none;
-      width: 70px;
-      transition: border-color .2s;
-    }
-    #minLengthInput:hover { border-color: #444; }
-    #minLengthInput:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
+    #langSelect:hover, #minLengthInput:hover { border-color: var(--border-light); }
+    #langSelect:focus, #minLengthInput:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
+    #minLengthInput { width: 70px; }
     .lightbox {
       display: none; position: fixed; inset: 0; z-index: 100;
-      background: rgba(0,0,0,.85); align-items: center; justify-content: center;
-      cursor: zoom-out;
+      background: rgba(0,0,0,.9); align-items: center; justify-content: center;
+      cursor: zoom-out; backdrop-filter: blur(8px);
     }
     .lightbox.show { display: flex; }
     .lightbox img {
       max-width: 90vw; max-height: 90vh;
-      border-radius: 12px; object-fit: contain;
-      box-shadow: 0 0 60px rgba(0,0,0,.8);
-      animation: zoomIn .18s ease;
+      border-radius: 14px; object-fit: contain;
+      box-shadow: 0 0 80px rgba(0,0,0,.8), 0 0 40px var(--accent-glow);
+      animation: zoomIn .25s cubic-bezier(.16,1,.3,1);
     }
-    @keyframes zoomIn { from{transform:scale(.85);opacity:0} to{transform:scale(1);opacity:1} }
+    @keyframes zoomIn { from{transform:scale(.9);opacity:0} to{transform:scale(1);opacity:1} }
     .gallery-grid {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px;
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px;
     }
     .gallery-grid img {
-      width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px;
-      cursor: pointer; transition: opacity .15s;
+      width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px;
+      cursor: pointer; transition: all .2s ease;
       border: 1px solid var(--border);
     }
-    .gallery-grid img:hover { opacity: .8; }
+    .gallery-grid img:hover { opacity: .85; transform: scale(1.03); border-color: var(--accent); }
     .dating-toggle {
-      display: flex; align-items: center; gap: 8px;
+      display: flex; align-items: center; gap: 10px;
       cursor: pointer; user-select: none; margin-top: 4px;
     }
     .dating-toggle input { display: none; }
     .toggle-track {
-      width: 34px; height: 18px; border-radius: 9px;
+      width: 36px; height: 20px; border-radius: 10px;
       background: var(--border); flex-shrink: 0;
-      position: relative; transition: background .2s;
+      position: relative; transition: background .25s, box-shadow .25s;
     }
-    .dating-toggle input:checked + .toggle-track { background: var(--accent); box-shadow: 0 0 8px var(--accent-glow); }
+    .dating-toggle input:checked + .toggle-track { background: var(--accent); box-shadow: 0 0 12px var(--accent-glow); }
     .toggle-thumb {
       position: absolute; top: 2px; left: 2px;
-      width: 14px; height: 14px; border-radius: 50%;
-      background: #fff; transition: transform .2s;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: #fff; transition: transform .25s cubic-bezier(.16,1,.3,1);
+      box-shadow: 0 1px 3px rgba(0,0,0,.3);
     }
     .dating-toggle input:checked + .toggle-track .toggle-thumb { transform: translateX(16px); }
-    .toggle-label { font-size: 11px; color: var(--text-muted); }
+    .toggle-label { font-size: 11px; color: var(--text-muted); font-weight: 500; transition: color .2s; }
     .dating-toggle input:checked ~ .toggle-label { color: var(--accent); }
+    /* Dating App Info Banner */
+    .dating-banner {
+      display: none; align-items: center; gap: 12px;
+      padding: 8px 22px;
+      background: rgba(255,45,110,.06);
+      border-bottom: 1px solid rgba(255,45,110,.15);
+      font-size: 12px; color: var(--text-secondary);
+      flex-shrink: 0; cursor: pointer;
+      transition: background .2s;
+    }
+    .dating-banner:hover { background: rgba(255,45,110,.1); }
+    .dating-banner.show { display: flex; animation: fadeSlideIn .3s ease; }
+    .dating-banner .db-label { font-weight: 700; color: var(--accent); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; }
+    .dating-banner .db-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .dating-banner .db-edit { font-size: 11px; color: var(--accent); font-weight: 600; white-space: nowrap; }
+
+    /* Dating App Modal */
+    .lang-warn-overlay {
+      position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);
+      display:none;align-items:center;justify-content:center;z-index:9999;
+    }
+    .lang-warn-overlay.show { display:flex; animation: fadeIn .2s ease; }
+    .lang-warn-box {
+      background:var(--surface);border:1px solid var(--accent);border-radius:var(--radius);
+      padding:28px 32px;max-width:380px;text-align:center;box-shadow:0 0 30px rgba(255,45,110,.2);
+    }
+    .lang-warn-box .warn-icon { font-size:36px;margin-bottom:12px; }
+    .lang-warn-box .warn-text { font-size:14px;color:var(--text);font-weight:500;line-height:1.5;margin-bottom:18px; }
+    .lang-warn-box button {
+      background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);
+      padding:8px 28px;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s;
+    }
+    .lang-warn-box button:hover { background:#e0245a; }
+
+    .da-modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,.7); backdrop-filter: blur(6px);
+      align-items: center; justify-content: center;
+    }
+    .da-modal-overlay.show { display: flex; animation: fadeIn .2s ease; }
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+    .da-modal {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 18px; padding: 28px; width: 460px; max-width: 90vw;
+      box-shadow: 0 20px 60px rgba(0,0,0,.5), 0 0 40px var(--accent-glow);
+      animation: modalIn .3s cubic-bezier(.16,1,.3,1);
+    }
+    @keyframes modalIn { from{transform:scale(.95) translateY(10px);opacity:0} to{transform:scale(1) translateY(0);opacity:1} }
+    .da-modal h3 {
+      font-size: 16px; font-weight: 700; margin-bottom: 6px;
+      background: linear-gradient(135deg,#ff2d6e,#ff6b9d);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .da-modal p { font-size: 12px; color: var(--text-muted); margin-bottom: 16px; }
+    .da-modal textarea {
+      width: 100%; min-height: 120px; background: var(--surface2);
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      padding: 12px 14px; color: var(--text); font-size: 13px;
+      font-family: inherit; line-height: 1.6; outline: none; resize: vertical;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .da-modal textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
+    .da-modal textarea::placeholder { color: var(--text-muted); }
+    .da-modal-btns { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+    .da-modal-btns button {
+      padding: 10px 22px; border-radius: 12px; font-size: 13px;
+      font-weight: 600; font-family: inherit; cursor: pointer; border: none;
+      transition: all .2s ease;
+    }
+    .da-btn-cancel { background: var(--surface2); color: var(--text-secondary); }
+    .da-btn-cancel:hover { background: var(--surface3); }
+    .da-btn-save { background: linear-gradient(135deg,#ff2d6e,#ff6b9d); color: #fff; box-shadow: 0 4px 14px var(--accent-glow); }
+    .da-btn-save:hover { box-shadow: 0 6px 24px var(--accent-glow-strong); transform: translateY(-1px); }
     #extraInfoInput {
       background: var(--surface2);
       border: 1px solid var(--border);
@@ -139,7 +219,7 @@
 
     /* ── PROFILE PANELS ── */
     .profile-panel {
-      width: 270px; flex-shrink: 0;
+      width: 290px; flex-shrink: 0;
       background: var(--surface);
       display: flex; flex-direction: column; overflow: hidden;
     }
@@ -148,85 +228,100 @@
 
     .profile-scroll {
       flex: 1; overflow-y: auto;
-      padding: 18px 14px;
-      display: flex; flex-direction: column; gap: 14px;
+      padding: 20px 16px;
+      display: flex; flex-direction: column; gap: 16px;
     }
     .profile-scroll::-webkit-scrollbar { width: 3px; }
+    .profile-scroll::-webkit-scrollbar-track { background: transparent; }
     .profile-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    .profile-scroll::-webkit-scrollbar-thumb:hover { background: var(--border-light); }
 
     /* Hero */
     .profile-hero {
-      display: flex; flex-direction: column; align-items: center; gap: 8px;
-      padding-bottom: 14px; border-bottom: 1px solid var(--border);
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+      padding-bottom: 16px; border-bottom: 1px solid var(--border);
     }
-    .pic-wrap { position: relative; width: 90px; height: 90px; }
+    .pic-wrap { position: relative; width: 96px; height: 96px; }
     .pic-ring {
-      width: 90px; height: 90px; border-radius: 50%;
-      background: var(--surface2); border: 2px solid var(--border);
+      width: 96px; height: 96px; border-radius: 50%;
+      background: var(--surface2); border: 2.5px solid var(--border);
       display: flex; align-items: center; justify-content: center;
-      font-size: 28px; overflow: hidden; cursor: pointer;
-      transition: border-color .2s;
+      font-size: 30px; overflow: hidden; cursor: pointer;
+      transition: border-color .25s, box-shadow .25s;
     }
-    .pic-ring:hover { border-color: var(--accent); }
+    .pic-ring:hover { border-color: var(--accent); box-shadow: 0 0 20px var(--accent-glow); }
     .pic-ring img { width: 100%; height: 100%; object-fit: cover; object-position: top center; border-radius: 50%; }
     .pic-overlay {
       position: absolute; inset: 0; border-radius: 50%;
-      background: rgba(0,0,0,.55);
+      background: rgba(0,0,0,.6);
       display: flex; align-items: center; justify-content: center;
-      font-size: 11px; color: #fff; opacity: 0;
-      transition: opacity .15s; cursor: pointer;
+      font-size: 11px; color: #fff; opacity: 0; font-weight: 500;
+      transition: opacity .2s; cursor: pointer;
+      backdrop-filter: blur(2px);
     }
     .pic-wrap:hover .pic-overlay { opacity: 1; }
     .online-badge {
-      position: absolute; bottom: 3px; right: 3px;
+      position: absolute; bottom: 4px; right: 4px;
       width: 14px; height: 14px; border-radius: 50%;
-      background: var(--accent); border: 2px solid var(--surface);
-      box-shadow: 0 0 8px var(--accent-glow);
+      background: #22c55e; border: 2.5px solid var(--surface);
+      box-shadow: 0 0 10px rgba(34,197,94,.4);
     }
 
     /* Editable name/username in hero */
     [contenteditable] {
       outline: none;
-      border-radius: 4px;
-      transition: background .15s, box-shadow .15s;
+      border-radius: 6px;
+      transition: background .2s, box-shadow .2s;
       cursor: text;
     }
-    [contenteditable]:hover  { background: rgba(255,255,255,.04); }
-    [contenteditable]:focus  { background: rgba(255,45,110,.08); box-shadow: 0 0 0 1px rgba(255,45,110,.35); }
+    [contenteditable]:hover  { background: rgba(255,255,255,.03); }
+    [contenteditable]:focus  { background: rgba(255,45,110,.06); box-shadow: 0 0 0 2px rgba(255,45,110,.25); }
 
     .edit-name {
-      font-size: 16px; font-weight: 700; text-align: center;
-      padding: 2px 6px; min-width: 60px;
+      font-size: 17px; font-weight: 700; text-align: center;
+      padding: 3px 8px; min-width: 60px;
     }
     .edit-username {
       font-size: 12px; color: var(--text-muted); text-align: center;
-      padding: 1px 5px; min-width: 40px;
+      padding: 2px 6px; min-width: 40px;
     }
 
     /* Tags row */
     .tags-row { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; }
     .tag {
-      font-size: 11px; padding: 3px 8px; border-radius: 20px;
-      background: var(--surface2); border: 1px solid var(--border); color: var(--text-muted);
-      min-width: 20px;
+      font-size: 11px; padding: 3px 10px; border-radius: 20px;
+      background: var(--surface2); border: 1px solid var(--border); color: var(--text-secondary);
+      min-width: 20px; font-weight: 500;
     }
-    .tag.pink { background: rgba(255,45,110,.1); border-color: rgba(255,45,110,.3); color: var(--accent); }
+    .tag.pink { background: rgba(255,45,110,.08); border-color: rgba(255,45,110,.25); color: var(--accent); }
 
     /* Info section */
-    .info-section { display: flex; flex-direction: column; gap: 4px; }
+    .info-section {
+      display: flex; flex-direction: column; gap: 2px;
+      background: var(--surface2);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      border: 1px solid var(--border);
+    }
     .section-label {
       font-size: 10px; font-weight: 700;
-      letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted);
-      margin-bottom: 2px;
+      letter-spacing: .1em; text-transform: uppercase; color: var(--text-muted);
+      margin-bottom: 6px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
     }
     .info-row {
-      display: grid; grid-template-columns: 80px 1fr;
+      display: grid; grid-template-columns: 85px 1fr;
       gap: 6px; align-items: start; font-size: 12px; line-height: 1.5;
+      padding: 3px 0;
+      border-radius: 4px;
+      transition: background .15s;
     }
-    .info-row .k { color: var(--text-muted); padding-top: 2px; }
+    .info-row:hover { background: rgba(255,255,255,.02); }
+    .info-row .k { color: var(--text-muted); padding-top: 2px; font-weight: 500; }
     .info-row .v {
       color: var(--text); text-align: right;
-      padding: 1px 5px; min-width: 20px;
+      padding: 1px 6px; min-width: 20px;
       border-radius: 4px;
     }
 
@@ -234,65 +329,69 @@
     .edit-area {
       background: var(--surface2);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 9px 11px;
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
       font-size: 12px; line-height: 1.7;
-      color: var(--text-muted);
-      white-space: pre-wrap; min-height: 48px;
-      transition: border-color .2s, box-shadow .2s;
+      font-family: inherit;
+      color: var(--text-secondary);
+      white-space: pre-wrap; min-height: 52px;
+      transition: border-color .2s, box-shadow .2s, color .2s;
     }
-    .edit-area:hover { border-color: #333; }
+    .edit-area:hover { border-color: var(--border-light); }
     .edit-area:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); color: var(--text); }
 
     /* Summary card */
     .summary-card {
-      background: rgba(255,45,110,.06);
-      border: 1px solid rgba(255,45,110,.15);
-      border-radius: 10px;
-      padding: 9px 11px;
+      background: rgba(255,45,110,.04);
+      border: 1px solid rgba(255,45,110,.12);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
       font-size: 12px; line-height: 1.7; color: var(--text);
       display: none;
       transition: border-color .4s;
     }
-    .summary-card.visible { display: block; }
-    .summary-row { display: flex; justify-content: space-between; gap: 8px; }
-    .summary-row .sk { color: var(--text-muted); }
+    .summary-card.visible { display: block; animation: fadeSlideIn .3s ease; }
+    @keyframes fadeSlideIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
+    .summary-row { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; }
+    .summary-row .sk { color: var(--text-muted); font-weight: 500; }
 
     /* ── CHAT ── */
     .chat-col {
       flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0;
+      background: var(--bg);
     }
     .chat-messages {
       flex: 1; overflow-y: auto;
-      padding: 20px 22px;
-      display: flex; flex-direction: column; gap: 10px;
+      padding: 24px 28px;
+      display: flex; flex-direction: column; gap: 12px;
     }
     .chat-messages::-webkit-scrollbar { width: 3px; }
+    .chat-messages::-webkit-scrollbar-track { background: transparent; }
     .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
     .msg-row {
-      display: flex; gap: 8px; max-width: 78%;
-      animation: msgIn .18s ease;
+      display: flex; gap: 10px; max-width: 75%;
+      animation: msgIn .25s cubic-bezier(.16,1,.3,1);
     }
-    @keyframes msgIn { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes msgIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
     .msg-row.customer  { align-self: flex-start; }
     .msg-row.moderator { align-self: flex-end; flex-direction: row-reverse; }
 
     .msg-av {
-      width: 26px; height: 26px; border-radius: 50%;
+      width: 30px; height: 30px; border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
       font-size: 12px; flex-shrink: 0; align-self: flex-end;
       overflow: hidden; background: var(--surface2); border: 1px solid var(--border);
     }
     .msg-av img { width: 100%; height: 100%; object-fit: cover; }
-    .msg-av.mod-av { background: linear-gradient(135deg, #ff2d6e, #ff7eb3); border: none; box-shadow: 0 0 8px var(--accent-glow); }
+    .msg-av.mod-av { background: linear-gradient(135deg, #ff2d6e, #ff7eb3); border: none; box-shadow: 0 0 12px var(--accent-glow); }
 
-    .msg-inner { display: flex; flex-direction: column; gap: 3px; }
+    .msg-inner { display: flex; flex-direction: column; gap: 4px; }
     .msg-row.moderator .msg-inner { align-items: flex-end; }
 
     .bubble {
-      padding: 9px 14px; border-radius: var(--radius);
-      font-size: 13.5px; line-height: 1.6; word-break: break-word;
+      padding: 10px 16px; border-radius: 18px;
+      font-size: 13.5px; line-height: 1.65; word-break: break-word;
     }
     .msg-row.customer .bubble {
       background: var(--surface2); border: 1px solid var(--border);
@@ -301,73 +400,77 @@
     .msg-row.moderator .bubble {
       background: linear-gradient(135deg, #ff2d6e, #ff6b9d);
       color: #fff; border-bottom-right-radius: 4px;
-      box-shadow: 0 4px 14px var(--accent-glow);
+      box-shadow: 0 6px 20px var(--accent-glow);
     }
-    .msg-time { font-size: 10px; color: var(--text-muted); padding: 0 2px; }
+    .msg-time { font-size: 10px; color: var(--text-muted); padding: 0 4px; font-weight: 500; }
 
     /* Typing */
-    .typing-row { display:flex; gap:8px; align-self:flex-end; flex-direction:row-reverse; animation:msgIn .18s ease; }
+    .typing-row { display:flex; gap:10px; align-self:flex-end; flex-direction:row-reverse; animation:msgIn .25s cubic-bezier(.16,1,.3,1); }
     .typing-bubble {
       background: linear-gradient(135deg,#ff2d6e,#ff6b9d);
-      border-radius:var(--radius); border-bottom-right-radius:4px;
-      padding:13px 17px; display:flex; gap:5px; align-items:center;
-      box-shadow:0 4px 14px var(--accent-glow);
+      border-radius:18px; border-bottom-right-radius:4px;
+      padding:14px 18px; display:flex; gap:6px; align-items:center;
+      box-shadow:0 6px 20px var(--accent-glow);
     }
-    .t-dot { width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.8);animation:tdot .9s infinite; }
+    .t-dot { width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.8);animation:tdot .9s infinite; }
     .t-dot:nth-child(2){animation-delay:.15s} .t-dot:nth-child(3){animation-delay:.3s}
-    @keyframes tdot{0%,80%,100%{transform:translateY(0);opacity:.6}40%{transform:translateY(-5px);opacity:1}}
+    @keyframes tdot{0%,80%,100%{transform:translateY(0);opacity:.5}40%{transform:translateY(-6px);opacity:1}}
 
     .empty-state {
       flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-      color:var(--text-muted);gap:10px;
+      color:var(--text-muted);gap:14px;
     }
-    .empty-state .icon{font-size:36px}
-    .empty-state p{font-size:13px}
+    .empty-state .icon{font-size:44px; filter: drop-shadow(0 0 15px var(--accent-glow));}
+    .empty-state p{font-size:14px; font-weight:500; color:var(--text-secondary);}
     .animate-btn {
-      margin-top: 6px;
+      margin-top: 8px;
       background: linear-gradient(135deg, #ff2d6e, #ff6b9d);
-      border: none; border-radius: 12px;
-      padding: 10px 24px;
+      border: none; border-radius: 14px;
+      padding: 12px 28px;
       color: #fff; font-size: 14px; font-weight: 600;
-      cursor: pointer; box-shadow: 0 4px 14px var(--accent-glow);
-      transition: box-shadow .15s, transform .1s;
+      font-family: inherit;
+      cursor: pointer; box-shadow: 0 6px 20px var(--accent-glow);
+      transition: all .2s ease;
+      letter-spacing: .01em;
     }
-    .animate-btn:hover { box-shadow: 0 4px 22px rgba(255,45,110,.45); }
-    .animate-btn:active { transform: scale(.95); }
+    .animate-btn:hover { box-shadow: 0 6px 30px var(--accent-glow-strong); transform: translateY(-1px); }
+    .animate-btn:active { transform: scale(.96) translateY(0); }
 
     .err-banner {
-      margin:0 18px 10px;background:rgba(255,45,110,.1);
-      border:1px solid rgba(255,45,110,.4);border-radius:8px;
-      padding:9px 14px;font-size:13px;color:var(--accent);display:none;
+      margin:0 18px 10px;background:rgba(255,45,110,.06);
+      border:1px solid rgba(255,45,110,.2);border-radius:var(--radius-sm);
+      padding:10px 14px;font-size:12px;color:var(--accent);display:none;
+      font-weight:500;
     }
-    .err-banner.show{display:block}
-    #contextBtns { display:none; padding:0 18px 10px; gap:8px; flex-wrap:wrap; }
-    #contextBtns.show { display:flex; }
+    .err-banner.show{display:block; animation: fadeSlideIn .2s ease;}
+    #contextBtns { display:none; padding:0 18px 10px; gap:10px; flex-wrap:wrap; }
+    #contextBtns.show { display:flex; animation: fadeSlideIn .2s ease; }
 
     /* Input */
     .input-bar {
-      padding:13px 18px;background:var(--surface);
+      padding:14px 20px;background:var(--surface);
       border-top:1px solid var(--border);
-      display:flex;gap:10px;align-items:flex-end;flex-shrink:0;
+      display:flex;gap:12px;align-items:flex-end;flex-shrink:0;
+      box-shadow: 0 -2px 10px rgba(0,0,0,.15);
     }
     .input-bar textarea {
       flex:1;background:var(--surface2);border:1px solid var(--border);
-      border-radius:12px;padding:10px 14px;color:var(--text);
+      border-radius:14px;padding:11px 16px;color:var(--text);
       font-size:13.5px;font-family:inherit;outline:none;resize:none;
       max-height:120px;line-height:1.5;transition:border-color .2s,box-shadow .2s;
     }
     .input-bar textarea:focus { border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow); }
     .input-bar textarea::placeholder{color:var(--text-muted)}
     .send-btn {
-      background:linear-gradient(135deg,#ff2d6e,#ff6b9d);border:none;border-radius:12px;
-      width:44px;height:44px;display:flex;align-items:center;justify-content:center;
-      cursor:pointer;flex-shrink:0;box-shadow:0 4px 14px var(--accent-glow);
-      transition:box-shadow .15s,transform .1s;
+      background:linear-gradient(135deg,#ff2d6e,#ff6b9d);border:none;border-radius:14px;
+      width:46px;height:46px;display:flex;align-items:center;justify-content:center;
+      cursor:pointer;flex-shrink:0;box-shadow:0 4px 16px var(--accent-glow);
+      transition:all .2s ease;
     }
-    .send-btn:hover{box-shadow:0 4px 22px rgba(255,45,110,.45)}
-    .send-btn:active{transform:scale(.92)}
-    .send-btn:disabled{opacity:.35;cursor:not-allowed;transform:none}
-    .send-btn svg{width:19px;height:19px;fill:#fff}
+    .send-btn:hover{box-shadow:0 6px 24px var(--accent-glow-strong); transform:translateY(-1px);}
+    .send-btn:active{transform:scale(.92) translateY(0)}
+    .send-btn:disabled{opacity:.3;cursor:not-allowed;transform:none;box-shadow:none}
+    .send-btn svg{width:20px;height:20px;fill:#fff}
 
     /* Pic URL popup */
     .pic-url-input {
@@ -381,6 +484,41 @@
   </style>
 </head>
 <body>
+<!-- LOADING SCREEN -->
+<div id="loadingScreen" style="
+  position:fixed;inset:0;z-index:9999;
+  background:#060608;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  transition:opacity .6s ease;
+">
+  <div style="font-size:56px;margin-bottom:24px;filter:drop-shadow(0 0 20px rgba(255,45,110,.3));animation:floatEmoji 2s ease-in-out infinite;">💋</div>
+  <div style="
+    font-size:32px;font-weight:700;
+    background:linear-gradient(135deg,#ff2d6e,#ff6b9d);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    letter-spacing:.02em;
+    font-family:'Inter',-apple-system,sans-serif;
+  ">Ready to Flirt?</div>
+  <div style="margin-top:10px;font-size:13px;color:#55556a;font-family:'Inter',sans-serif;font-weight:500;">SexyTalk.io Demo</div>
+  <div style="
+    margin-top:32px;width:36px;height:36px;
+    border:2.5px solid #242430;border-top-color:#ff2d6e;border-radius:50%;
+    animation:spinLoader .7s linear infinite;
+  "></div>
+  <style>
+    @keyframes spinLoader{to{transform:rotate(360deg)}}
+    @keyframes floatEmoji{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+  </style>
+</div>
+<script>
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    const ls = document.getElementById('loadingScreen');
+    ls.style.opacity = '0';
+    setTimeout(() => ls.remove(), 500);
+  }, 1500);
+});
+</script>
 
 <div class="lightbox" id="lightbox" onclick="closeLightbox()">
   <img id="lightboxImg" src="" />
@@ -419,8 +557,15 @@
   <div class="status-pill" style="gap:14px;">
     <span style="color:var(--text-muted);font-size:12px;">In: <strong id="topIns" contenteditable="true" onblur="state.ins=parseInt(this.textContent)||0" style="color:var(--text);min-width:20px;display:inline-block;outline:none;cursor:text;">0</strong></span>
     <span style="color:var(--text-muted);font-size:12px;">Out: <strong id="topOuts" contenteditable="true" onblur="state.outs=parseInt(this.textContent)||0" style="color:var(--text);min-width:20px;display:inline-block;outline:none;cursor:text;">0</strong></span>
+    <button onclick="clearChat()" title="Clear chat" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text-muted);font-size:11px;padding:4px 10px;cursor:pointer;font-family:inherit;font-weight:600;transition:all .2s;">Clear</button>
     <div style="display:flex;align-items:center;gap:6px;"><div class="status-dot"></div><span data-i18n="statusLive"> Live</span></div>
   </div>
+</div>
+
+<div class="dating-banner" id="datingBanner" onclick="openDatingModal()">
+  <span class="db-label">Dating App Info</span>
+  <span class="db-text" id="datingBannerText">Click to add previous dating app information...</span>
+  <span class="db-edit">Edit</span>
 </div>
 
 <div class="workspace">
@@ -436,10 +581,15 @@
           <input type="file" id="custFileInput" accept="image/*" style="display:none" onchange="custFileChosen(this)" />
         </div>
         <label class="dating-toggle">
-          <input type="checkbox" id="datingAppToggle" onchange="CONFIG.datingApp=this.checked;saveToStorage()" />
+          <input type="checkbox" id="datingAppToggle" onchange="CONFIG.datingApp=this.checked;toggleDatingPrevInfo(this.checked);saveToStorage()" />
           <span class="toggle-track"><span class="toggle-thumb"></span></span>
           <span class="toggle-label" data-i18n="toggleDatingApp">Dating App Customer</span>
         </label>
+      </div>
+
+      <div class="info-section" id="custSummarySection" style="display:none">
+        <div class="section-label"><span data-i18n="sectionAiLearned">AI Learned</span> <span style="color:var(--accent)">↓</span></div>
+        <div class="summary-card visible" id="custSummaryCard"></div>
       </div>
 
       <div class="info-section">
@@ -492,11 +642,6 @@
           data-field="customerNotes" onblur="syncNotes('cust')"></div>
       </div>
 
-      <div class="info-section" id="custSummarySection" style="display:none">
-        <div class="section-label"><span data-i18n="sectionAiLearned">AI Learned</span> <span style="color:var(--accent)">↓</span></div>
-        <div class="summary-card visible" id="custSummaryCard"></div>
-      </div>
-
     </div>
   </div>
 
@@ -506,7 +651,8 @@
       <div class="empty-state" id="emptyState">
         <div class="icon">💋</div>
         <p data-i18n="emptyText">Type a Message to See how Sexy you are! 💋</p>
-        <button class="animate-btn" data-i18n="animateBtn" onclick="sendAnimateMe()">Animate me</button>
+        <button class="animate-btn" id="animateMeBtn" data-i18n="animateBtn" onclick="sendAnimateMe()">Animate me</button>
+        <p id="datingAppHint" data-i18n="datingAppHint" style="display:none;font-size:13px;color:var(--accent);font-weight:500;font-style:italic;">Text me where we know each other from</p>
       </div>
     </div>
     <div class="err-banner" id="errBanner"></div>
@@ -532,6 +678,11 @@
           <div class="pic-ring" id="modPicRing" onclick="openLightbox('modPicRing')" style="cursor:zoom-in">🎭</div>
           <div class="online-badge"></div>
         </div>
+      </div>
+
+      <div class="info-section" id="modSummarySection" style="display:none">
+        <div class="section-label"><span data-i18n="sectionAiLearned">AI Learned</span> <span style="color:var(--accent)">↓</span></div>
+        <div class="summary-card visible" id="modSummaryCard"></div>
       </div>
 
       <div class="info-section">
@@ -580,11 +731,6 @@
           onblur="syncNotes('mod')"></div>
       </div>
 
-      <div class="info-section" id="modSummarySection" style="display:none">
-        <div class="section-label"><span data-i18n="sectionAiLearned">AI Learned</span> <span style="color:var(--accent)">↓</span></div>
-        <div class="summary-card visible" id="modSummaryCard"></div>
-      </div>
-
       <div class="info-section" id="privateGallerySection">
         <div class="section-label"><span data-i18n="sectionGallery">Private Gallery</span> <span data-i18n="galleryNote" style="color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">(not visible for customer)</span></div>
         <div class="gallery-grid" id="privateGalleryGrid"></div>
@@ -612,6 +758,7 @@ const UI_LABELS = {
     toggleDatingApp:'Dating App Kunde',
     emptyText:'Schreib eine Nachricht um zu sehen wie sexy du bist! 💋',
     animateBtn:'Animiere mich',
+    datingAppHint:'Schreib mir woher wir uns kennen',
     labelLanguage:'Sprache', labelMinLength:'Min. Nachrichtenlänge', labelExtraInfo:'Extra Info',
     statusLive:' Live', chatPlaceholder:'Als Kunde schreiben…',
   },
@@ -627,6 +774,7 @@ const UI_LABELS = {
     toggleDatingApp:'Dating App Customer',
     emptyText:'Type a Message to See how Sexy you are! 💋',
     animateBtn:'Animate me',
+    datingAppHint:'Text me where we know each other from',
     labelLanguage:'Language', labelMinLength:'Min. Message Characters', labelExtraInfo:'Extra Info',
     statusLive:' Live', chatPlaceholder:'Write as customer…',
   },
@@ -642,6 +790,7 @@ const UI_LABELS = {
     toggleDatingApp:'Client d\'app de rencontre',
     emptyText:'Écris un message pour voir à quel point tu es sexy ! 💋',
     animateBtn:'Anime-moi',
+    datingAppHint:'Écris-moi d\'où on se connaît',
     labelLanguage:'Langue', labelMinLength:'Longueur min. du message', labelExtraInfo:'Info supplémentaire',
     statusLive:' En direct', chatPlaceholder:'Écrire en tant que client…',
   },
@@ -657,6 +806,7 @@ const UI_LABELS = {
     toggleDatingApp:'Cliente de app de citas',
     emptyText:'¡Escribe un mensaje para ver lo sexy que eres! 💋',
     animateBtn:'Anímate',
+    datingAppHint:'Escríbeme de dónde nos conocemos',
     labelLanguage:'Idioma', labelMinLength:'Caract. mín. del mensaje', labelExtraInfo:'Info extra',
     statusLive:' En vivo', chatPlaceholder:'Escribir como cliente…',
   },
@@ -672,6 +822,7 @@ const UI_LABELS = {
     toggleDatingApp:'Cliente app di dating',
     emptyText:'Scrivi un messaggio per scoprire quanto sei sexy! 💋',
     animateBtn:'Animami',
+    datingAppHint:'Scrivimi da dove ci conosciamo',
     labelLanguage:'Lingua', labelMinLength:'Car. min. messaggio', labelExtraInfo:'Info extra',
     statusLive:' Live', chatPlaceholder:'Scrivi come cliente…',
   },
@@ -687,6 +838,7 @@ const UI_LABELS = {
     toggleDatingApp:'Dating app klant',
     emptyText:'Stuur een bericht om te zien hoe sexy je bent! 💋',
     animateBtn:'Animeer mij',
+    datingAppHint:'Stuur me waar we elkaar van kennen',
     labelLanguage:'Taal', labelMinLength:'Min. berichtlengte', labelExtraInfo:'Extra info',
     statusLive:' Live', chatPlaceholder:'Schrijf als klant…',
   },
@@ -702,6 +854,7 @@ const UI_LABELS = {
     toggleDatingApp:'Cliente de app de namoro',
     emptyText:'Escreve uma mensagem para ver o quão sexy és! 💋',
     animateBtn:'Anima-me',
+    datingAppHint:'Escreve-me de onde nos conhecemos',
     labelLanguage:'Idioma', labelMinLength:'Car. mín. da mensagem', labelExtraInfo:'Info extra',
     statusLive:' Ao vivo', chatPlaceholder:'Escrever como cliente…',
   },
@@ -717,6 +870,7 @@ const UI_LABELS = {
     toggleDatingApp:'Klient aplikacji randkowej',
     emptyText:'Napisz wiadomość, aby zobaczyć jak bardzo jesteś seksowny! 💋',
     animateBtn:'Animuj mnie',
+    datingAppHint:'Napisz mi skąd się znamy',
     labelLanguage:'Język', labelMinLength:'Min. długość wiadomości', labelExtraInfo:'Dodatkowe info',
     statusLive:' Na żywo', chatPlaceholder:'Pisz jako klient…',
   },
@@ -732,6 +886,7 @@ const UI_LABELS = {
     toggleDatingApp:'Dating uygulaması müşterisi',
     emptyText:'Ne kadar seksi olduğunu görmek için mesaj yaz! 💋',
     animateBtn:'Beni canlandır',
+    datingAppHint:'Nereden tanıştığımızı yaz bana',
     labelLanguage:'Dil', labelMinLength:'Min. mesaj karakteri', labelExtraInfo:'Ekstra bilgi',
     statusLive:' Canlı', chatPlaceholder:'Müşteri olarak yaz…',
   },
@@ -747,6 +902,7 @@ const UI_LABELS = {
     toggleDatingApp:'Клиент приложения знакомств',
     emptyText:'Напиши сообщение, чтобы узнать, насколько ты сексуален! 💋',
     animateBtn:'Оживи меня',
+    datingAppHint:'Напиши мне откуда мы знакомы',
     labelLanguage:'Язык', labelMinLength:'Мин. символов в сообщении', labelExtraInfo:'Доп. информация',
     statusLive:' Прямой эфир', chatPlaceholder:'Писать как клиент…',
   },
@@ -762,6 +918,7 @@ const UI_LABELS = {
     toggleDatingApp:'Dating-app-kund',
     emptyText:'Skriv ett meddelande för att se hur sexig du är! 💋',
     animateBtn:'Animera mig',
+    datingAppHint:'Skriv till mig varifrån vi känner varandra',
     labelLanguage:'Språk', labelMinLength:'Min. meddelandetecken', labelExtraInfo:'Extra info',
     statusLive:' Live', chatPlaceholder:'Skriv som kund…',
   },
@@ -1004,9 +1161,10 @@ function applyLanguage(code) {
   const lang = getLang(code);
   const suffix = lang.yrsSuffix || ' yrs';
 
-  // Update all [data-field] elements
+  // Update all [data-field] elements (skip gender — must stay male/female)
   document.querySelectorAll('[data-field]').forEach(el => {
     const [obj, key] = el.dataset.field.split('.');
+    if (key === 'gender') return;
     if (obj === 'customer'  && lang.customer[key]  !== undefined) el.innerText = lang.customer[key];
     if (obj === 'moderator' && lang.moderator[key] !== undefined) el.innerText = lang.moderator[key];
   });
@@ -1024,8 +1182,10 @@ function applyLanguage(code) {
   CONFIG.moderatorNotes = lang.moderatorNotes;
 
   // Sync translated values into CONFIG
-  Object.assign(CONFIG.customer,  lang.customer);
-  Object.assign(CONFIG.moderator, lang.moderator);
+  const {gender: _cg, ...custLang} = lang.customer;
+  const {gender: _mg, ...modLang} = lang.moderator;
+  Object.assign(CONFIG.customer,  custLang);
+  Object.assign(CONFIG.moderator, modLang);
   saveToStorage();
 }
 
@@ -1040,6 +1200,9 @@ const CONFIG = {
   sourceLanguage: 'de',
   extraInfo: '',
   datingApp: false,
+  datingAppCustomerInfo: '',
+  datingAppModeratorInfo: '',
+  datingAppSpamMessage: '',
 
   customerNotes: document.getElementById('custNotesEl').innerText,
   moderatorNotes: document.getElementById('modNotesEl').innerText,
@@ -1073,7 +1236,7 @@ const CONFIG = {
     smoking: 'nein', hasCar: false, housing: 'Mietwohnung',
     hasProfilePic: true, hasPictures: true,
     personality: 'offen, empathisch, verspielt',
-    profilePic: 'images/moderator/photo-001.jpg',
+    profilePic: 'images/moderator/photo-006.jpg',
     privateGallery: [
       'images/moderator/photo-002.jpg',
       'images/moderator/photo-003.jpg',
@@ -1101,8 +1264,10 @@ function syncField(el) {
   const value = el.innerText.trim();
   if (!path) return;
   const [obj, key] = path.split('.');
-  if (obj === 'customer')  CONFIG.customer[key]  = value;
-  if (obj === 'moderator') CONFIG.moderator[key] = value;
+  const stored = key === 'gender' ? (isFemale(value) ? 'female' : 'male') : value;
+  if (obj === 'customer')  CONFIG.customer[key]  = stored;
+  if (obj === 'moderator') CONFIG.moderator[key] = stored;
+  if (key === 'gender') el.innerText = stored.charAt(0).toUpperCase() + stored.slice(1);
   // keep birthDate.age in sync
   if (key === 'age') {
     const num = parseInt(value);
@@ -1151,6 +1316,73 @@ function autoResize(el) { el.style.height='auto'; el.style.height=Math.min(el.sc
 function handleKey(e) { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();} }
 function scrollBottom() { const m=document.getElementById('messages'); m.scrollTop=m.scrollHeight; }
 function updateCounters() { document.getElementById('topIns').textContent=state.ins; document.getElementById('topOuts').textContent=state.outs; }
+function clearChat() {
+  state.messages = []; state.ins = 0; state.outs = 0;
+  state.chatId = String(Math.floor(100000 + Math.random() * 900000));
+  state.sessionStart = new Date().toISOString();
+  state.summaryUser = {}; state.summaryAssistant = {};
+  const m = document.getElementById('messages');
+  const empty = document.getElementById('emptyState');
+  m.innerHTML = '';
+  empty.style.display = '';
+  m.appendChild(empty);
+  updateCounters();
+  document.getElementById('contextBtns').classList.remove('show');
+  document.getElementById('btnGetAnimation').style.display = 'none';
+  document.getElementById('btnReactivate').style.display = 'none';
+  updateSummaryCards(false);
+  document.getElementById('custSummaryCard').innerHTML = '';
+  document.getElementById('modSummaryCard').innerHTML = '';
+  document.getElementById('custSummarySection').style.display = 'none';
+  document.getElementById('modSummarySection').style.display = 'none';
+  // Reset animate/hint visibility based on dating app state
+  document.getElementById('animateMeBtn').style.display = CONFIG.datingApp ? 'none' : '';
+  document.getElementById('datingAppHint').style.display = CONFIG.datingApp ? '' : 'none';
+  localStorage.removeItem('demoState');
+  saveToStorage();
+}
+function toggleDatingPrevInfo(on) {
+  const banner = document.getElementById('datingBanner');
+  const animBtn = document.getElementById('animateMeBtn');
+  const hint = document.getElementById('datingAppHint');
+  if (on) {
+    openDatingModal(); banner.classList.add('show');
+    animBtn.style.display = 'none'; hint.style.display = '';
+  } else {
+    banner.classList.remove('show');
+    CONFIG.datingAppCustomerInfo = ''; CONFIG.datingAppModeratorInfo = ''; CONFIG.datingAppSpamMessage = '';
+    updateDatingBanner(); saveToStorage();
+    animBtn.style.display = ''; hint.style.display = 'none';
+  }
+}
+function openDatingModal() {
+  document.getElementById('datingModalCustomer').value = CONFIG.datingAppCustomerInfo || '';
+  document.getElementById('datingModalModerator').value = CONFIG.datingAppModeratorInfo || '';
+  document.getElementById('datingModalSpam').value = CONFIG.datingAppSpamMessage || '';
+  document.getElementById('datingModal').classList.add('show');
+  setTimeout(() => document.getElementById('datingModalCustomer').focus(), 100);
+}
+function closeLangWarn() {
+  document.getElementById('langWarnModal').classList.remove('show');
+}
+function closeDatingModal() {
+  document.getElementById('datingModal').classList.remove('show');
+}
+function saveDatingInfo() {
+  CONFIG.datingAppCustomerInfo = document.getElementById('datingModalCustomer').value.trim();
+  CONFIG.datingAppModeratorInfo = document.getElementById('datingModalModerator').value.trim();
+  CONFIG.datingAppSpamMessage = document.getElementById('datingModalSpam').value.trim();
+  updateDatingBanner();
+  closeDatingModal();
+  saveToStorage();
+}
+function updateDatingBanner() {
+  const parts = [];
+  if (CONFIG.datingAppCustomerInfo) parts.push('Customer: ' + CONFIG.datingAppCustomerInfo);
+  if (CONFIG.datingAppModeratorInfo) parts.push('Moderator: ' + CONFIG.datingAppModeratorInfo);
+  if (CONFIG.datingAppSpamMessage) parts.push('Spam: ' + CONFIG.datingAppSpamMessage);
+  document.getElementById('datingBannerText').textContent = parts.join('  |  ') || 'Click to add previous dating app information...';
+}
 function updateContextButtons() {
   const msgs = state.messages;
   const last  = msgs[msgs.length - 1];
@@ -1269,6 +1501,12 @@ async function sendMessage() {
   const text  = input.value.trim();
   if (!text) return;
 
+  // Language check for first 3 incoming messages (only if more than 2 words)
+  if (state.ins < 3 && text.split(/\s+/).length > 2) {
+    const langOk = await checkLanguage(text);
+    if (!langOk) return;
+  }
+
   document.getElementById('errBanner').classList.remove('show');
 
   const msg = { text, type:'received', messageType:'text', timestamp:new Date().toISOString() };
@@ -1296,12 +1534,46 @@ async function sendMessage() {
   }
 }
 
+const LANG_CHECK_ENDPOINT = window.location.hostname === 'localhost' ? 'http://localhost:3001/langcheck' : '/api/langcheck';
+const LANG_FULL = {de:'German',en:'English',fr:'French',es:'Spanish',it:'Italian',nl:'Dutch',pt:'Portuguese',pl:'Polish',tr:'Turkish',ru:'Russian',sv:'Swedish',da:'Danish',no:'Norwegian',fi:'Finnish',ro:'Romanian',cs:'Czech',hu:'Hungarian'};
+
+async function checkLanguage(text) {
+  if (state.ins > 3) return true;
+  const sourceLanguage = LANG_FULL[CONFIG.sourceLanguage] || CONFIG.sourceLanguage;
+  try {
+    const resp = await fetch(LANG_CHECK_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: text, sourceLanguage }),
+    });
+    const data = await resp.json();
+    const content = data.choices?.[0]?.message?.content?.trim() || '';
+    if (content.includes('<NO/>')) {
+      document.getElementById('langWarnModal').classList.add('show');
+      return false;
+    }
+  } catch (e) {
+    console.warn('Language check failed:', e);
+  }
+  return true;
+}
+
+const FEMALE_WORDS = ['female','weiblich','féminin','femenino','femminile','vrouw','feminino','kobieta','kadın','женщина','kvinna'];
+const MALE_WORDS = ['male','männlich','masculin','masculino','maschile','man','mężczyzna','erkek','мужчина'];
+function isFemale(val) {
+  if (!val) return false;
+  const v = val.trim().toLowerCase();
+  if (FEMALE_WORDS.includes(v)) return true;
+  if (MALE_WORDS.includes(v)) return false;
+  return v.includes('f');
+}
+
 function buildPayload() {
   return {
       origin: {
-        url: 'https://' + CONFIG.origin,
+        url: CONFIG.datingApp && state.ins <= 3 ? 'https://v2-teddy-sys-mod.de' : 'https://' + CONFIG.origin,
         noCache: true,
-        pageType: 'https://' + CONFIG.origin,
+        pageType: CONFIG.datingApp && state.ins <= 3 ? 'https://v2-teddy-sys-mod.de' : 'https://' + CONFIG.origin,
         clientType: 'server',
         accountUsername: '216',
         extensionVersion: '1.0.25',
@@ -1317,7 +1589,7 @@ function buildPayload() {
         customerInfo: {
           age:                CONFIG.customer.birthDate?.age || CONFIG.customer.age,
           name:               CONFIG.customer.name,
-          gender:             CONFIG.customer.gender?.toLowerCase().includes('f') ? 'female' : 'male',
+          gender:             CONFIG.customer.gender || 'male',
           height:             CONFIG.customer.height || '',
 
           smoking:            CONFIG.customer.smoking || '',
@@ -1344,7 +1616,7 @@ function buildPayload() {
         moderatorInfo: {
           age:                CONFIG.moderator.birthDate?.age || CONFIG.moderator.age,
           name:               CONFIG.moderator.name,
-          gender:             CONFIG.moderator.gender?.toLowerCase().includes('f') ? 'female' : 'male',
+          gender:             CONFIG.moderator.gender || 'female',
           originId:           CONFIG.moderator.username,
           username:           CONFIG.moderator.username,
           occupation:         CONFIG.moderator.occupation || '',
@@ -1367,10 +1639,10 @@ function buildPayload() {
           hasProfilePic:      !!CONFIG.moderator.profilePic,
         },
         sessionStart: state.sessionStart,
-        customerNotes: CONFIG.customerNotes.trim() || '',
+        customerNotes: [CONFIG.customerNotes.trim(), CONFIG.datingApp && CONFIG.datingAppCustomerInfo?.trim() ? 'Previous Dating App Info: ' + CONFIG.datingAppCustomerInfo.trim() : ''].filter(Boolean).join('\n') || '',
         sendToMaestro: false,
-        ...(CONFIG.datingApp ? { extraVariables: ['Dating App'] } : {}),
-        moderatorNotes: CONFIG.moderatorNotes.trim() || '',
+        ...(CONFIG.datingApp ? { extraVariables: [{ key: 'Dating App', value: true }] } : {}),
+        moderatorNotes: [CONFIG.moderatorNotes.trim(), CONFIG.datingApp && CONFIG.datingAppModeratorInfo?.trim() ? 'Previous Dating App Info: ' + CONFIG.datingAppModeratorInfo.trim() : '', CONFIG.datingApp && CONFIG.datingAppSpamMessage?.trim() ? 'Spam Message (reason she cannot text on dating app): ' + CONFIG.datingAppSpamMessage.trim() : ''].filter(Boolean).join('\n') || '',
         ...(CONFIG.sourceLanguage && CONFIG.sourceLanguage !== 'de' ? { sourceLanguage: ({en:'English',fr:'French',es:'Spanish',it:'Italian',nl:'Dutch',pt:'Portuguese',pl:'Polish',tr:'Turkish',ru:'Russian',sv:'Swedish',da:'Danish',no:'Norwegian',fi:'Finnish',ro:'Romanian',cs:'Czech',hu:'Hungarian'})[CONFIG.sourceLanguage] || CONFIG.sourceLanguage } : {}),
       }
     };
@@ -1490,6 +1762,9 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbo
       CONFIG.sourceLanguage = savedConfig.sourceLanguage || 'de';
       CONFIG.minLength      = savedConfig.minLength      || 100;
       CONFIG.datingApp      = savedConfig.datingApp      || false;
+      CONFIG.datingAppCustomerInfo = savedConfig.datingAppCustomerInfo || '';
+      CONFIG.datingAppModeratorInfo = savedConfig.datingAppModeratorInfo || '';
+      CONFIG.datingAppSpamMessage = savedConfig.datingAppSpamMessage || '';
       CONFIG.extraInfo      = savedConfig.extraInfo      || '';
       // Update all [data-field] elements
       document.querySelectorAll('[data-field]').forEach(el => {
@@ -1509,6 +1784,12 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbo
       document.getElementById('langSelect').value = CONFIG.sourceLanguage;
       document.getElementById('minLengthInput').value = CONFIG.minLength;
       document.getElementById('datingAppToggle').checked = CONFIG.datingApp;
+      if (CONFIG.datingApp) {
+        document.getElementById('datingBanner').classList.add('show');
+        updateDatingBanner();
+        document.getElementById('animateMeBtn').style.display = 'none';
+        document.getElementById('datingAppHint').style.display = '';
+      }
     }
     if (savedState) {
       state.messages = savedState.messages || [];
@@ -1532,6 +1813,43 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbo
 
 initProfilePics();
 applyUILabels(CONFIG.sourceLanguage);
+// Restore dating banner
+if (CONFIG.datingApp) {
+  document.getElementById('datingBanner').classList.add('show');
+  updateDatingBanner();
+}
 </script>
+
+<div class="lang-warn-overlay" id="langWarnModal" onclick="if(event.target===this)closeLangWarn()">
+  <div class="lang-warn-box">
+    <div class="warn-icon">⚠️</div>
+    <div class="warn-text">Dialog language does not match with language in message!</div>
+    <button onclick="closeLangWarn()">OK</button>
+  </div>
+</div>
+
+<div class="da-modal-overlay" id="datingModal" onclick="if(event.target===this)closeDatingModal()">
+  <div class="da-modal">
+    <h3>Previous Dating App Information</h3>
+    <p>Enter information gathered from the dating app. This will be added to the notes.</p>
+    <div style="margin-bottom:14px;">
+      <label style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px;">Customer Info</label>
+      <textarea id="datingModalCustomer" placeholder="e.g. likes hiking, has a dog named Max, works in IT..."></textarea>
+    </div>
+    <div style="margin-bottom:14px;">
+      <label style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px;">Moderator Info</label>
+      <textarea id="datingModalModerator" placeholder="e.g. matched on Lovoo, talked about travel, shared photos..."></textarea>
+    </div>
+    <div>
+      <label style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px;">Spam Message (why she can't text on the app anymore)</label>
+      <textarea id="datingModalSpam" placeholder="e.g. account got restricted, too many messages, app keeps crashing..."></textarea>
+    </div>
+    <div class="da-modal-btns">
+      <button class="da-btn-cancel" onclick="closeDatingModal()">Cancel</button>
+      <button class="da-btn-save" onclick="saveDatingInfo()">Save</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
