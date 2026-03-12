@@ -11,7 +11,7 @@ export function buildPayload(config: AppConfig, state: AppState) {
       accountUsername: '216',
       extensionVersion: '1.0.25',
     },
-    ...(config.extraInfo ? { keywords: [config.extraInfo] } : {}),
+    ...(config.datingApp && state.ins <= 3 ? { keywords: ['Werbe Profil'] } : config.extraInfo ? { keywords: [config.extraInfo] } : {}),
     bypassCache: true,
     siteInfos: {
       ins: state.ins,
