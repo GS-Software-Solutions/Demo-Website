@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { MODERATOR_PHOTO_SETS } from '@/data/random-profiles';
 import TopBar from '@/components/TopBar';
 import DatingBanner from '@/components/DatingBanner';
 import ProfilePanel from '@/components/profile/ProfilePanel';
@@ -22,6 +23,14 @@ export default function Home() {
   useEffect(() => {
     const timer = setTimeout(() => setSplashDone(true), 1500);
     return () => clearTimeout(timer);
+  }, []);
+
+  // Preload all moderator photos so cycling is instant
+  useEffect(() => {
+    MODERATOR_PHOTO_SETS.forEach(set => {
+      new Image().src = set.profilePic;
+      set.gallery.forEach(src => { new Image().src = src; });
+    });
   }, []);
 
   return (
