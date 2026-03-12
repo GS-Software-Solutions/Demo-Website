@@ -1,0 +1,11 @@
+{
+  "name": "sexytalk-frontend",
+  "version": "1.0.0",
+  "description": "Static HTML site",
+  "scripts": {
+    "build": "echo 'Static site, no build needed'",
+    "start": "node proxy.js"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
