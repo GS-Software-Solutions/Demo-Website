@@ -135,16 +135,21 @@ export function parseResponse(data: any): {
   alertMsg: string | null;
   summaryUser: Record<string, any> | null;
   summaryAssistant: Record<string, any> | null;
+  minorDetected: boolean;
 } {
   const raw = data.translation?.translatedText || data.inferenceCallResponse?.content || data.resText;
   const text = raw ? raw.replace(/[-:\u2013\u2014\u2012\u2015]/g, '') : null;
 
+  // Check for minor detection in response text or checker result
+  const checkerReason =
+    data.inferenceCallResponse?.inputCheckerResult?.reason ||
+    data.inferenceCallResponse?.inputCheckerResult?.result ||
+    '';
+  const allText = `${raw || ''} ${checkerReason} ${data.alert || ''}`.toLowerCase();
+  const minorDetected = /minor[\s_]*(detected|check)|check[\s_]*minor|underage|MINOR_DETECTED/.test(allText) || /MINOR_DETECTED/i.test(JSON.stringify(data));
+
   let alertMsg: string | null = null;
   if (!text) {
-    const checkerReason =
-      data.inferenceCallResponse?.inputCheckerResult?.reason ||
-      data.inferenceCallResponse?.inputCheckerResult?.result ||
-      '';
     alertMsg = checkerReason
       ? `[Input blocked: ${checkerReason}]`
       : data.alert
@@ -156,5 +161,5 @@ export function parseResponse(data: any): {
   const summaryUser = summary?.user && Object.keys(summary.user).length ? summary.user : null;
   const summaryAssistant = summary?.assistant && Object.keys(summary.assistant).length ? summary.assistant : null;
 
-  return { text, alertMsg, summaryUser, summaryAssistant };
+  return { text, alertMsg, summaryUser, summaryAssistant, minorDetected };
 }

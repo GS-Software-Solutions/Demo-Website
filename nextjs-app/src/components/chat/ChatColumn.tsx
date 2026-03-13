@@ -6,6 +6,7 @@ import { callAPI, checkLanguage, parseResponse } from '@/lib/api';
 import { getUI } from '@/data/ui-labels';
 import MessageRow from './MessageRow';
 import TypingIndicator from './TypingIndicator';
+import MinorDetectedModal from '../modals/MinorDetectedModal';
 import type { Message } from '@/types';
 
 interface ChatColumnProps {
@@ -22,6 +23,7 @@ export default function ChatColumn({ onShowLangWarn }: ChatColumnProps) {
   const [inputText, setInputText] = useState('');
   const [showGetAnimation, setShowGetAnimation] = useState(false);
   const [showReactivate, setShowReactivate] = useState(false);
+  const [showMinorWarn, setShowMinorWarn] = useState(false);
 
   const messagesRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -65,7 +67,11 @@ export default function ChatColumn({ onShowLangWarn }: ChatColumnProps) {
   }
 
   async function handleResponse(data: any) {
-    const { text, alertMsg, summaryUser, summaryAssistant } = parseResponse(data);
+    const { text, alertMsg, summaryUser, summaryAssistant, minorDetected } = parseResponse(data);
+
+    if (minorDetected) {
+      setShowMinorWarn(true);
+    }
 
     if (text) {
       const reply: Message = { text, type: 'sent', messageType: 'text', timestamp: new Date().toISOString() };
@@ -304,6 +310,8 @@ export default function ChatColumn({ onShowLangWarn }: ChatColumnProps) {
           </svg>
         </button>
       </div>
+
+      <MinorDetectedModal show={showMinorWarn} onClose={() => setShowMinorWarn(false)} />
     </div>
   );
 }
