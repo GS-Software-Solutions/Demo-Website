@@ -131,7 +131,8 @@ export default function ChatColumn({ onShowLangWarn }: ChatColumnProps) {
         dispatch({ type: 'SET_NOTES', payload: { field: 'customerNotes', value: text } });
       }
       if (summaryAssistant) {
-        const text = Object.entries(summaryAssistant).map(([k, v]) => `${k}: ${typeof v === 'object' ? JSON.stringify(v) : v}`).join('\n');
+        const BLOCKED_MOD_KEYS = /sexual|fetish|kink|prefer/i;
+        const text = Object.entries(summaryAssistant).filter(([k]) => !BLOCKED_MOD_KEYS.test(k)).map(([k, v]) => `${k}: ${typeof v === 'object' ? JSON.stringify(v) : v}`).join('\n');
         dispatch({ type: 'SET_NOTES', payload: { field: 'moderatorNotes', value: text } });
       }
     }
