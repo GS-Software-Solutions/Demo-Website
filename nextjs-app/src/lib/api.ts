@@ -140,13 +140,13 @@ export function parseResponse(data: any): {
   const raw = data.translation?.translatedText || data.inferenceCallResponse?.content || data.resText;
   const text = raw ? raw.replace(/[-:\u2013\u2014\u2012\u2015]/g, '') : null;
 
-  // Check for minor detection in response text or checker result
+  // Check for minor detection: trigger=BLOCK_MINOR or action=BLOCK_REQUEST from checker
   const checkerReason =
     data.inferenceCallResponse?.inputCheckerResult?.reason ||
     data.inferenceCallResponse?.inputCheckerResult?.result ||
     '';
-  const allText = `${raw || ''} ${checkerReason} ${data.alert || ''}`.toLowerCase();
-  const minorDetected = /minor[\s_]*(detected|check)|check[\s_]*minor|underage|MINOR_DETECTED/.test(allText) || /MINOR_DETECTED/i.test(JSON.stringify(data));
+  const jsonStr = JSON.stringify(data);
+  const minorDetected = /BLOCK_MINOR/i.test(jsonStr) || /minor[\s_]*(detected|check)|check[\s_]*minor|underage/i.test(jsonStr);
 
   let alertMsg: string | null = null;
   if (!text) {
