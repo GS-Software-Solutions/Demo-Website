@@ -69,6 +69,7 @@ export function buildPayload(config: AppConfig, state: AppState) {
         profilePic:         config.moderator.profilePic || '',
         hasPictures:        config.moderator.hasPictures || false,
         hasProfilePic:      !!config.moderator.profilePic,
+        privateGallery:     config.moderator.privateGallery || [],
       },
       sessionStart: state.sessionStart,
       customerNotes: [
