@@ -154,11 +154,13 @@ export function parseResponse(data: any): {
 
   let alertMsg: string | null = null;
   if (!text) {
-    alertMsg = checkerReason
-      ? `[Input blocked: ${checkerReason}]`
-      : data.alert
-        ? `[API Alert: ${data.alert}]`
-        : '[No response text]';
+    alertMsg = minorDetected
+      ? '⛔ Minor detected – response blocked'
+      : checkerReason
+        ? `[Input blocked: ${checkerReason}]`
+        : data.alert
+          ? `[API Alert: ${data.alert}]`
+          : '[No response text]';
   }
 
   const summary = data.translation?.translatedSummary || data.summary;
