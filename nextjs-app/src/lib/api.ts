@@ -69,7 +69,7 @@ export function buildPayload(config: AppConfig, state: AppState) {
         profilePic:         config.moderator.profilePic || '',
         hasPictures:        config.moderator.hasPictures || false,
         hasProfilePic:      !!config.moderator.profilePic,
-        privateGallery:     config.moderator.privateGallery || [],
+        privateGallery:     (config.moderator.privateGallery || []).filter(url => !state.sentImages.includes(url)),
       },
       sessionStart: state.sessionStart,
       customerNotes: [
@@ -139,6 +139,7 @@ export function parseResponse(data: any): {
   summaryUser: Record<string, any> | null;
   summaryAssistant: Record<string, any> | null;
   minorDetected: boolean;
+  assets: { imageUrl: string; resText: string }[];
 } {
   const raw = data.translation?.translatedText || data.inferenceCallResponse?.content || data.resText;
   const text = raw ? raw.replace(/[-:\u2013\u2014\u2012\u2015]/g, '') : null;
@@ -166,5 +167,9 @@ export function parseResponse(data: any): {
   const summaryUser = summary?.user && Object.keys(summary.user).length ? summary.user : null;
   const summaryAssistant = summary?.assistant && Object.keys(summary.assistant).length ? summary.assistant : null;
 
-  return { text, alertMsg, summaryUser, summaryAssistant, minorDetected };
+  const assets: { imageUrl: string; resText: string }[] = (data.inferenceCallResponse?.assetsToSend || [])
+    .filter((a: any) => a.imageUrl && a.resText)
+    .map((a: any) => ({ imageUrl: a.imageUrl, resText: a.resText }));
+
+  return { text, alertMsg, summaryUser, summaryAssistant, minorDetected, assets };
 }

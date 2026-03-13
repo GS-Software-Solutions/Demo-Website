@@ -23,7 +23,18 @@ export default function MessageRow({ message, customerPic, moderatorPic }: Messa
         )}
       </div>
       <div className="msg-inner">
-        <div className="bubble">{message.text}</div>
+        {message.imageUrl && (
+          <div className="bubble" style={{ padding: 4 }}>
+            <img
+              src={message.imageUrl}
+              alt=""
+              style={{ maxWidth: 220, borderRadius: 8, display: 'block' }}
+            />
+          </div>
+        )}
+        {message.text && (
+          <div className="bubble">{message.text}</div>
+        )}
         <div className="msg-time">{fmtTime(message.timestamp)}</div>
       </div>
     </div>

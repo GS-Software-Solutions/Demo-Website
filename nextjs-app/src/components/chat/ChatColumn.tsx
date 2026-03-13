@@ -24,10 +24,12 @@ export default function ChatColumn({ onShowLangWarn }: ChatColumnProps) {
   const [showGetAnimation, setShowGetAnimation] = useState(false);
   const [showReactivate, setShowReactivate] = useState(false);
   const [showMinorWarn, setShowMinorWarn] = useState(false);
+  const [pendingImage, setPendingImage] = useState<string | null>(null);
 
   const messagesRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const sendBtnRef = useRef<HTMLButtonElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   // Abort in-flight request when chat is cleared
@@ -91,15 +93,21 @@ export default function ChatColumn({ onShowLangWarn }: ChatColumnProps) {
       return;
     }
 
-    const { text, alertMsg, summaryUser, summaryAssistant } = parseResponse(data);
+    const { text, alertMsg, summaryUser, summaryAssistant, assets } = parseResponse(data);
 
-    if (text) {
+    // Handle image assets from backend
+    if (assets.length > 0) {
+      const asset = assets[0];
+      const imgMsg: Message = { text: asset.resText, imageUrl: asset.imageUrl, type: 'sent', messageType: 'image', timestamp: new Date().toISOString() };
+      dispatch({ type: 'ADD_MESSAGE', payload: imgMsg });
+      dispatch({ type: 'TRACK_SENT_IMAGE', payload: asset.imageUrl });
+      setShowTyping(false);
+    } else if (text) {
       const reply: Message = { text, type: 'sent', messageType: 'text', timestamp: new Date().toISOString() };
       dispatch({ type: 'ADD_MESSAGE', payload: reply });
       setShowTyping(false);
     } else {
       setShowTyping(false);
-      // If minor was detected via parseResponse, show popup instead of error
       const { minorDetected } = parseResponse(data);
       if (minorDetected) {
         setShowMinorWarn(true);
@@ -169,6 +177,13 @@ export default function ChatColumn({ onShowLangWarn }: ChatColumnProps) {
     }
   }
 
+  function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPendingImage(URL.createObjectURL(file));
+    e.target.value = '';
+  }
+
   async function sendContextPayload() {
     if (state.loading) return;
     setError(null);
@@ -189,16 +204,18 @@ export default function ChatColumn({ onShowLangWarn }: ChatColumnProps) {
 
   async function sendMessage() {
     const text = inputText.trim();
-    if (!text) return;
+    if (!text && !pendingImage) return;
 
     pulseBtn();
+    const imageUrl = pendingImage;
+    setPendingImage(null);
 
     // If already loading, abort current and merge
     if (state.loading && abortRef.current) {
       abortRef.current.abort();
       abortRef.current = null;
 
-      const msg2: Message = { text, type: 'received', messageType: 'text', timestamp: new Date().toISOString() };
+      const msg2: Message = { text, type: 'received', messageType: imageUrl ? 'image' : 'text', timestamp: new Date().toISOString(), ...(imageUrl ? { imageUrl } : {}) };
       dispatch({ type: 'ADD_MESSAGE', payload: msg2 });
       setInputText('');
 
@@ -233,7 +250,7 @@ export default function ChatColumn({ onShowLangWarn }: ChatColumnProps) {
 
     setError(null);
 
-    const msg: Message = { text, type: 'received', messageType: 'text', timestamp: new Date().toISOString() };
+    const msg: Message = { text, type: 'received', messageType: imageUrl ? 'image' : 'text', timestamp: new Date().toISOString(), ...(imageUrl ? { imageUrl } : {}) };
     dispatch({ type: 'ADD_MESSAGE', payload: msg });
     setInputText('');
 
@@ -348,8 +365,31 @@ export default function ChatColumn({ onShowLangWarn }: ChatColumnProps) {
         </div>
       )}
 
+      {/* Image Preview */}
+      {pendingImage && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 18px' }}>
+          <img src={pendingImage} alt="" style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 6 }} />
+          <button onClick={() => setPendingImage(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 16 }}>{'\u2715'}</button>
+        </div>
+      )}
+
       {/* Input Bar */}
       <div className="input-bar">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          style={{ display: 'none' }}
+          onChange={handleImageUpload}
+        />
+        <button
+          className="send-btn"
+          onClick={() => fileInputRef.current?.click()}
+          style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', padding: '0 4px' }}
+          title="Send image"
+        >
+          {'\uD83D\uDDBC\uFE0F'}
+        </button>
         <textarea
           ref={textareaRef}
           placeholder={ui.chatPlaceholder}

@@ -20,6 +20,7 @@ function initialState(): AppState {
     loading: false,
     summaryUser: {},
     summaryAssistant: {},
+    sentImages: [],
   };
 }
 
@@ -50,7 +51,8 @@ export type Action =
   | { type: 'SET_CUSTOMER_PIC'; payload: string }
   | { type: 'SET_NOTES'; payload: { field: 'customerNotes' | 'moderatorNotes'; value: string } }
   | { type: 'RANDOMIZE_PROFILE'; payload: { who: 'customer' | 'moderator'; profile: Profile } }
-  | { type: 'SET_EXTRA_INFO'; payload: string };
+  | { type: 'SET_EXTRA_INFO'; payload: string }
+  | { type: 'TRACK_SENT_IMAGE'; payload: string };
 
 /* ---------- reducer ---------- */
 
@@ -126,6 +128,7 @@ function reducer(store: Store, action: Action): Store {
           sessionStart: new Date().toISOString(),
           summaryUser: {},
           summaryAssistant: {},
+          sentImages: [],
         },
       };
 
@@ -160,6 +163,9 @@ function reducer(store: Store, action: Action): Store {
 
     case 'SET_EXTRA_INFO':
       return { ...store, config: { ...config, extraInfo: action.payload } };
+
+    case 'TRACK_SENT_IMAGE':
+      return { ...store, state: { ...state, sentImages: [...state.sentImages, action.payload] } };
 
     default:
       return store;

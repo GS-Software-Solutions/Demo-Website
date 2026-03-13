@@ -38,6 +38,7 @@ export interface Profile {
 export interface Message {
   text: string;
   payloadText?: string;
+  imageUrl?: string;
   type: 'sent' | 'received';
   messageType: string;
   timestamp: string;
@@ -67,4 +68,5 @@ export interface AppState {
   loading: boolean;
   summaryUser: Record<string, any>;
   summaryAssistant: Record<string, any>;
+  sentImages: string[];
 }
