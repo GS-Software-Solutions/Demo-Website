@@ -67,13 +67,14 @@ export default function ChatColumn({ onShowLangWarn }: ChatColumnProps) {
   }
 
   async function handleResponse(data: any) {
-    const { text, alertMsg, summaryUser, summaryAssistant, minorDetected } = parseResponse(data);
-
-    if (minorDetected) {
+    // Quick check: if BLOCK_MINOR anywhere in response, just show popup
+    if (JSON.stringify(data).includes('BLOCK_MINOR')) {
       setShowMinorWarn(true);
       setShowTyping(false);
       return;
     }
+
+    const { text, alertMsg, summaryUser, summaryAssistant } = parseResponse(data);
 
     if (text) {
       const reply: Message = { text, type: 'sent', messageType: 'text', timestamp: new Date().toISOString() };
