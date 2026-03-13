@@ -117,7 +117,8 @@ export default function ChatColumn({ onShowLangWarn }: ChatColumnProps) {
       await handleResponse(data);
     } catch (err: any) {
       setShowTyping(false);
-      setError(err.message);
+      if (err.message?.includes('BLOCK_MINOR')) { setShowMinorWarn(true); }
+      else { setError(err.message); }
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
@@ -134,7 +135,8 @@ export default function ChatColumn({ onShowLangWarn }: ChatColumnProps) {
       await handleResponse(data);
     } catch (err: any) {
       setShowTyping(false);
-      setError(err.message);
+      if (err.message?.includes('BLOCK_MINOR')) { setShowMinorWarn(true); }
+      else { setError(err.message); }
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
@@ -174,7 +176,8 @@ export default function ChatColumn({ onShowLangWarn }: ChatColumnProps) {
       } catch (err: any) {
         if (err.name === 'AbortError') return;
         setShowTyping(false);
-        setError(err.message);
+        if (err.message?.includes('BLOCK_MINOR')) { setShowMinorWarn(true); }
+        else { setError(err.message); }
       } finally {
         abortRef.current = null;
         dispatch({ type: 'SET_LOADING', payload: false });
@@ -214,7 +217,8 @@ export default function ChatColumn({ onShowLangWarn }: ChatColumnProps) {
     } catch (err: any) {
       if (err.name === 'AbortError') return;
       setShowTyping(false);
-      setError(err.message);
+      if (err.message?.includes('BLOCK_MINOR')) { setShowMinorWarn(true); }
+      else { setError(err.message); }
     } finally {
       abortRef.current = null;
       dispatch({ type: 'SET_LOADING', payload: false });
