@@ -98,9 +98,9 @@ export function buildPayload(config: AppConfig, state: AppState) {
 export async function callAPI(config: AppConfig, state: AppState, signal?: AbortSignal) {
   const payload = buildPayload(config, state);
   console.log('\ud83d\udce4 PAYLOAD:', JSON.stringify(payload, null, 2));
-  const res = await fetch(config.endpoint, {
+  const res = await fetch('/api/proxy', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-api-key': config.apiKey },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
     signal,
   });
