@@ -2,7 +2,7 @@ const http = require('http');
 const https = require('https');
 
 const API_TARGET = 'https://api.sexytalk.io/inference';
-const API_KEY = 'ct-9c0cceda-4e0c-45bf-8e3c-ccd1e9bb2178';
+const API_KEY = process.env.SEXYTALK_API_KEY || '';
 function loadOpenAIKey() {
   if (process.env.OPENAI_API_KEY) return process.env.OPENAI_API_KEY;
   try {
@@ -17,7 +17,7 @@ const PORT = 3001;
 http.createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-api-key');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
   if (req.method !== 'POST') { res.writeHead(405); res.end(); return; }
@@ -96,6 +96,11 @@ When in doubt, if the message does not feel like it was written by a native ${so
 
     } else {
       // ── Default: sexytalk API proxy ──
+      if (!API_KEY) {
+        res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ error: 'Server proxy is not configured.' }));
+        return;
+      }
       const url = new URL(API_TARGET);
       const options = {
         hostname: url.hostname,

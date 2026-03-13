@@ -3,17 +3,27 @@ const https = require('https');
 const OPENAI_KEY = process.env.OPENAI_API_KEY || '';
 
 module.exports = (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') { res.status(204).end(); return; }
-  if (req.method !== 'POST') { res.status(405).end(); return; }
+  if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed.' }); return; }
+  if (!OPENAI_KEY) { res.status(500).json({ error: 'Language check is not configured.' }); return; }
 
   let body = '';
   req.on('data', chunk => body += chunk);
   req.on('end', () => {
-    const { message, sourceLanguage } = JSON.parse(body);
+    let message = '';
+    let sourceLanguage = '';
+    try {
+      const parsed = JSON.parse(body);
+      message = typeof parsed?.message === 'string' ? parsed.message : '';
+      sourceLanguage = typeof parsed?.sourceLanguage === 'string' ? parsed.sourceLanguage : '';
+    } catch (err) {
+      res.status(400).json({ error: 'Invalid JSON body.' });
+      return;
+    }
+
+    if (!sourceLanguage) {
+      res.status(400).json({ error: 'sourceLanguage is required.' });
+      return;
+    }
 
     const prompt = `You are a strict language identification system. Your primary function is to determine if a given text is predominantly ${sourceLanguage}.
 

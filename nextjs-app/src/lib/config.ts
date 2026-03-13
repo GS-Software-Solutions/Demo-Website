@@ -1,8 +1,6 @@
 import { AppConfig } from '@/types';
 
 export const DEFAULT_CONFIG: AppConfig = {
-  apiKey: 'ct-9c0cceda-4e0c-45bf-8e3c-ccd1e9bb2178',
-  endpoint: '/api/proxy',
   origin: 'kizzle.net',
   minLength: 100,
   sourceLanguage: 'en',

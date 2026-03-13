@@ -43,8 +43,6 @@ export interface Message {
 }
 
 export interface AppConfig {
-  apiKey: string;
-  endpoint: string;
   origin: string;
   minLength: number;
   sourceLanguage: string;
