@@ -125,7 +125,7 @@ export default function TopBar() {
           >{state.outs}</strong>
         </span>
         <button
-          onClick={() => dispatch({ type: 'CLEAR_CHAT' })}
+          onClick={() => { window.dispatchEvent(new Event('clear-chat')); dispatch({ type: 'CLEAR_CHAT' }); }}
           title="Clear chat"
           style={{
             background: 'var(--surface2)', border: '2px solid var(--accent)',

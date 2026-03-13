@@ -121,6 +121,7 @@ function reducer(store: Store, action: Action): Store {
           messages: [],
           ins: 0,
           outs: 0,
+          loading: false,
           chatId: randomChatId(),
           sessionStart: new Date().toISOString(),
           summaryUser: {},

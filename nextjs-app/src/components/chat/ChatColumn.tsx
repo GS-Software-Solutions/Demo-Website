@@ -30,6 +30,20 @@ export default function ChatColumn({ onShowLangWarn }: ChatColumnProps) {
   const sendBtnRef = useRef<HTMLButtonElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
+  // Abort in-flight request when chat is cleared
+  useEffect(() => {
+    function handleClearChat() {
+      if (abortRef.current) {
+        abortRef.current.abort();
+        abortRef.current = null;
+      }
+      setShowTyping(false);
+      setError(null);
+    }
+    window.addEventListener('clear-chat', handleClearChat);
+    return () => window.removeEventListener('clear-chat', handleClearChat);
+  }, []);
+
   // Auto-scroll on new messages
   useEffect(() => {
     if (messagesRef.current) {
