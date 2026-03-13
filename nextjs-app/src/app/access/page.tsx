@@ -1,13 +1,13 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import AppShell from '@/components/AppShell';
+import AccessGate from '@/components/access/AccessGate';
 import { isAuthorizedCookieStore } from '@/lib/server/auth';
 
-export default async function Home() {
+export default async function AccessPage() {
   const cookieStore = await cookies();
-  if (!isAuthorizedCookieStore(cookieStore)) {
-    redirect('/access');
+  if (isAuthorizedCookieStore(cookieStore)) {
+    redirect('/');
   }
 
-  return <AppShell />;
+  return <AccessGate />;
 }

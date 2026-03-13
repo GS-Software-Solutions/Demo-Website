@@ -1450,7 +1450,6 @@ function applyLanguage(code) {
 //  CONFIG  ← edit defaults here
 // ─────────────────────────────────────────
 const CONFIG = {
-  apiKey:    'ct-9c0cceda-4e0c-45bf-8e3c-ccd1e9bb2178',
   endpoint:  window.location.hostname === 'localhost' ? 'http://localhost:3001' : '/api/proxy',
   origin:         'kizzle.net',
   minLength:      100,
@@ -6148,7 +6147,7 @@ async function callAPI(signal) {
   console.log('📤 PAYLOAD:', JSON.stringify(payload, null, 2));
   const res = await fetch(CONFIG.endpoint, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-api-key': CONFIG.apiKey },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
     signal,
   });

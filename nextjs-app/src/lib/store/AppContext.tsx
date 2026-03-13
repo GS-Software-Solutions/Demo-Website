@@ -193,7 +193,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const saved = JSON.parse(raw) as Partial<Store>;
-        const restoredConfig = saved.config ? { ...DEFAULT_CONFIG, ...saved.config } : DEFAULT_CONFIG;
+        const savedConfig = (saved.config || {}) as Record<string, unknown>;
+        const { apiKey: _deprecatedApiKey, endpoint: _deprecatedEndpoint, ...safeConfig } = savedConfig;
+        const restoredConfig = saved.config ? { ...DEFAULT_CONFIG, ...safeConfig } : DEFAULT_CONFIG;
         const restoredState = saved.state ? { ...initialState(), ...saved.state } : initialState();
         dispatch({ type: 'RESTORE', payload: { config: restoredConfig, state: restoredState } });
       }

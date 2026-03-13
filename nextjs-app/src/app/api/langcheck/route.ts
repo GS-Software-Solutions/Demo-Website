@@ -1,9 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { isAuthorizedCookieStore } from '@/lib/server/auth';
 
 const OPENAI_KEY = process.env.OPENAI_API_KEY || '';
 
 export async function POST(req: NextRequest) {
-  const { message, sourceLanguage } = await req.json();
+  const cookieStore = await cookies();
+  if (!isAuthorizedCookieStore(cookieStore)) {
+    return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
+  }
+
+  if (!OPENAI_KEY) {
+    return NextResponse.json({ error: 'Language check is not configured.' }, { status: 500 });
+  }
+
+  let message = '';
+  let sourceLanguage = '';
+
+  try {
+    const body = await req.json();
+    message = typeof body?.message === 'string' ? body.message : '';
+    sourceLanguage = typeof body?.sourceLanguage === 'string' ? body.sourceLanguage : '';
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON body.' }, { status: 400 });
+  }
+
+  if (!sourceLanguage) {
+    return NextResponse.json({ error: 'sourceLanguage is required.' }, { status: 400 });
+  }
 
   const prompt = `You are a strict language identification system. Your primary function is to determine if a given text is predominantly ${sourceLanguage}.
 
@@ -46,7 +70,7 @@ When in doubt, if the message does not feel like it was written by a native ${so
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${OPENAI_KEY}`,
+      Authorization: `Bearer ${OPENAI_KEY}`,
     },
     body: payload,
   });
@@ -55,19 +79,7 @@ When in doubt, if the message does not feel like it was written by a native ${so
   return new NextResponse(data, {
     status: res.status,
     headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      'Access-Control-Allow-Origin': '*',
-    },
-  });
-}
-
-export async function OPTIONS() {
-  return new NextResponse(null, {
-    status: 204,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
+      'Content-Type': res.headers.get('content-type') || 'application/json; charset=utf-8',
     },
   });
 }

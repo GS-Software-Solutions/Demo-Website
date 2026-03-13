@@ -1,9 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { isAuthorizedCookieStore } from '@/lib/server/auth';
 
 const API_TARGET = 'https://api.sexytalk.io/inference';
-const API_KEY = 'ct-9c0cceda-4e0c-45bf-8e3c-ccd1e9bb2178';
+const API_KEY = process.env.SEXYTALK_API_KEY || '';
 
 export async function POST(req: NextRequest) {
+  const cookieStore = await cookies();
+  if (!isAuthorizedCookieStore(cookieStore)) {
+    return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
+  }
+
+  if (!API_KEY) {
+    return NextResponse.json({ error: 'Server proxy is not configured.' }, { status: 500 });
+  }
+
   const body = await req.text();
 
   const res = await fetch(API_TARGET, {
@@ -19,19 +30,7 @@ export async function POST(req: NextRequest) {
   return new NextResponse(data, {
     status: res.status,
     headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      'Access-Control-Allow-Origin': '*',
-    },
-  });
-}
-
-export async function OPTIONS() {
-  return new NextResponse(null, {
-    status: 204,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, x-api-key',
+      'Content-Type': res.headers.get('content-type') || 'application/json; charset=utf-8',
     },
   });
 }
