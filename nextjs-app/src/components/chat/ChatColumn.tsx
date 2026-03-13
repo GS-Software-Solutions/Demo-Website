@@ -14,6 +14,15 @@ interface ChatColumnProps {
   onShowLangWarn: () => void;
 }
 
+const MALE_PICS = [
+  '/male-pics/27884195_019_dcdc.jpg',
+  '/male-pics/39700326_030_ca59.jpg',
+  '/male-pics/66235540_006_4911.jpg',
+  '/male-pics/79722577_051_b108.jpg',
+  '/male-pics/92482109_022_1d1e.jpg',
+  '/male-pics/99782711_031_95ba.jpg',
+];
+
 export default function ChatColumn({ onShowLangWarn }: ChatColumnProps) {
   const { config, state, dispatch } = useApp();
   const ui = getUI(config.sourceLanguage);
@@ -25,11 +34,11 @@ export default function ChatColumn({ onShowLangWarn }: ChatColumnProps) {
   const [showReactivate, setShowReactivate] = useState(false);
   const [showMinorWarn, setShowMinorWarn] = useState(false);
   const [pendingImage, setPendingImage] = useState<string | null>(null);
+  const [showImagePicker, setShowImagePicker] = useState(false);
 
   const messagesRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const sendBtnRef = useRef<HTMLButtonElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   // Abort in-flight request when chat is cleared
@@ -176,13 +185,6 @@ export default function ChatColumn({ onShowLangWarn }: ChatColumnProps) {
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
-  }
-
-  function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setPendingImage(URL.createObjectURL(file));
-    e.target.value = '';
   }
 
   async function sendContextPayload() {
@@ -367,8 +369,23 @@ export default function ChatColumn({ onShowLangWarn }: ChatColumnProps) {
         </div>
       )}
 
+      {/* Image Picker */}
+      {showImagePicker && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, padding: '8px 18px' }}>
+          {MALE_PICS.map((src, i) => (
+            <img
+              key={i}
+              src={src}
+              alt=""
+              onClick={() => { setPendingImage(src); setShowImagePicker(false); }}
+              style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: 8, cursor: 'pointer', border: pendingImage === src ? '2px solid var(--accent)' : '1px solid var(--border)', transition: 'all .2s' }}
+            />
+          ))}
+        </div>
+      )}
+
       {/* Image Preview */}
-      {pendingImage && (
+      {pendingImage && !showImagePicker && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 18px' }}>
           <img src={pendingImage} alt="" style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 6 }} />
           <button onClick={() => setPendingImage(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 16 }}>{'\u2715'}</button>
@@ -377,16 +394,8 @@ export default function ChatColumn({ onShowLangWarn }: ChatColumnProps) {
 
       {/* Input Bar */}
       <div className="input-bar">
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          style={{ display: 'none' }}
-          onChange={handleImageUpload}
-        />
         <button
-          className="send-btn"
-          onClick={() => fileInputRef.current?.click()}
+          onClick={() => setShowImagePicker(!showImagePicker)}
           style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', padding: '0 4px' }}
           title="Send image"
         >
