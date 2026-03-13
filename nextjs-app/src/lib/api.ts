@@ -109,6 +109,8 @@ export async function callAPI(config: AppConfig, state: AppState, signal?: Abort
   if (!rawText) throw new Error(`Empty response (HTTP ${res.status})`);
   const data = JSON.parse(rawText);
   if (!data) throw new Error('Null response from API');
+  // If minor blocked, return data so handleResponse can show the popup
+  if (/BLOCK_MINOR/i.test(rawText)) return data;
   if (!res.ok) throw new Error(data.message || data.error || `HTTP ${res.status}`);
   return data;
 }
