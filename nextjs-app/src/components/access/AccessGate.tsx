@@ -39,7 +39,7 @@ export default function AccessGate() {
   return (
     <div className="access-gate">
       <div className="access-box">
-        <div style={{ fontSize: 32, marginBottom: 12 }}>{'\uD83D\uDD12'}</div>
+        <div style={{ fontSize: 32, marginBottom: 12 }}>{'\uD83D\uDC8B'}</div>
         <h2>Access Code Required</h2>
         <p>Enter the access code to continue</p>
         <input

@@ -254,18 +254,19 @@ export default function ChatColumn({ onShowLangWarn }: ChatColumnProps) {
     const msg: Message = { text, type: 'received', messageType: imageUrl ? 'image' : 'text', timestamp: new Date().toISOString(), ...(imageUrl ? { imageUrl } : {}) };
     dispatch({ type: 'ADD_MESSAGE', payload: msg });
     setInputText('');
+    dispatch({ type: 'SET_LOADING', payload: true });
+    setShowTyping(true);
 
     // Language check for first 3 messages (after showing the message)
     if (state.ins < 3 && text.split(/\s+/).length > 2) {
       const langOk = await checkLanguage(text, config.sourceLanguage);
       if (!langOk) {
+        setShowTyping(false);
+        dispatch({ type: 'SET_LOADING', payload: false });
         onShowLangWarn();
         return;
       }
     }
-
-    dispatch({ type: 'SET_LOADING', payload: true });
-    setShowTyping(true);
 
     try {
       abortRef.current = new AbortController();
