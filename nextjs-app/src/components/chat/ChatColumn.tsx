@@ -71,6 +71,8 @@ export default function ChatColumn({ onShowLangWarn }: ChatColumnProps) {
 
     if (minorDetected) {
       setShowMinorWarn(true);
+      setShowTyping(false);
+      return;
     }
 
     if (text) {
