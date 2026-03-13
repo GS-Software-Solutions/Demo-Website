@@ -67,8 +67,11 @@ export default function ChatColumn({ onShowLangWarn }: ChatColumnProps) {
   }
 
   async function handleResponse(data: any) {
+    const jsonStr = JSON.stringify(data);
+    console.log('🔍 handleResponse called, BLOCK_MINOR present:', jsonStr.includes('BLOCK_MINOR'));
+
     // Quick check: if BLOCK_MINOR anywhere in response, just show popup
-    if (JSON.stringify(data).includes('BLOCK_MINOR')) {
+    if (jsonStr.includes('BLOCK_MINOR')) {
       setShowMinorWarn(true);
       setShowTyping(false);
       return;
@@ -271,7 +274,7 @@ export default function ChatColumn({ onShowLangWarn }: ChatColumnProps) {
       </div>
 
       {/* Error Banner */}
-      {error && (
+      {error && !showMinorWarn && (
         <div className="err-banner show">
           {'\u2717'} {error}
         </div>
