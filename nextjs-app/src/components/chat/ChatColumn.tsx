@@ -85,7 +85,13 @@ export default function ChatColumn({ onShowLangWarn }: ChatColumnProps) {
       setShowTyping(false);
     } else {
       setShowTyping(false);
-      setError(alertMsg || 'No response');
+      // If minor was detected via parseResponse, show popup instead of error
+      const { minorDetected } = parseResponse(data);
+      if (minorDetected) {
+        setShowMinorWarn(true);
+      } else {
+        setError(alertMsg || 'No response');
+      }
     }
 
     if (summaryUser || summaryAssistant) {

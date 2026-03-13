@@ -109,11 +109,9 @@ export async function callAPI(config: AppConfig, state: AppState, signal?: Abort
   if (!rawText) throw new Error(`Empty response (HTTP ${res.status})`);
   const data = JSON.parse(rawText);
   if (!data) throw new Error('Null response from API');
-  if (!res.ok) {
-    // Include BLOCK_MINOR in error so catch blocks can detect it
-    if (/BLOCK_MINOR/i.test(rawText)) throw new Error('BLOCK_MINOR');
-    throw new Error(data.message || data.error || `HTTP ${res.status}`);
-  }
+  // Always return data for BLOCK_MINOR so handleResponse can show the popup
+  if (/BLOCK_MINOR/i.test(rawText)) return data;
+  if (!res.ok) throw new Error(data.message || data.error || `HTTP ${res.status}`);
   return data;
 }
 
