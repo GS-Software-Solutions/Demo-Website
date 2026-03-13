@@ -182,7 +182,13 @@ export default function ChatColumn({ onShowLangWarn }: ChatColumnProps) {
       return;
     }
 
-    // Language check for first 3 messages
+    setError(null);
+
+    const msg: Message = { text, type: 'received', messageType: 'text', timestamp: new Date().toISOString() };
+    dispatch({ type: 'ADD_MESSAGE', payload: msg });
+    setInputText('');
+
+    // Language check for first 3 messages (after showing the message)
     if (state.ins < 3 && text.split(/\s+/).length > 2) {
       const langOk = await checkLanguage(text, config.sourceLanguage);
       if (!langOk) {
@@ -190,12 +196,6 @@ export default function ChatColumn({ onShowLangWarn }: ChatColumnProps) {
         return;
       }
     }
-
-    setError(null);
-
-    const msg: Message = { text, type: 'received', messageType: 'text', timestamp: new Date().toISOString() };
-    dispatch({ type: 'ADD_MESSAGE', payload: msg });
-    setInputText('');
 
     dispatch({ type: 'SET_LOADING', payload: true });
     setShowTyping(true);
