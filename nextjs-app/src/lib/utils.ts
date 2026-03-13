@@ -17,9 +17,9 @@ export function isFemale(val: string): boolean {
   return v.includes('f');
 }
 
-export function mergeTrailingCustomerMsgs(msgs: { text: string; type: string }[]): typeof msgs {
-  if (msgs.length < 2) return [...msgs];
-  const result = [...msgs];
+export function mergeTrailingCustomerMsgs(msgs: { text: string; payloadText?: string; type: string }[]): { text: string; type: string }[] {
+  if (msgs.length < 2) return msgs.map(m => ({ ...m, text: m.payloadText || m.text }));
+  const result = msgs.map(m => ({ ...m, text: m.payloadText || m.text }));
   while (result.length >= 2 && result[result.length - 1].type === 'received' && result[result.length - 2].type === 'received') {
     const last = result.pop()!;
     result[result.length - 1] = { ...result[result.length - 1], text: result[result.length - 1].text + '\n' + last.text };

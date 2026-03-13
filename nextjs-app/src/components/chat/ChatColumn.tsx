@@ -133,6 +133,28 @@ export default function ChatColumn({ onShowLangWarn }: ChatColumnProps) {
     }
   }
 
+  async function sendQuickMessage(displayText: string, payloadText: string) {
+    if (state.loading) return;
+    setError(null);
+
+    const msg: Message = { text: displayText, payloadText, type: 'received', messageType: 'text', timestamp: new Date().toISOString() };
+    dispatch({ type: 'ADD_MESSAGE', payload: msg });
+    dispatch({ type: 'SET_LOADING', payload: true });
+    setShowTyping(true);
+
+    try {
+      const updatedState = { ...state, messages: [...state.messages, msg], ins: state.ins + 1 };
+      const data = await callAPI(config, updatedState);
+      await handleResponse(data);
+    } catch (err: any) {
+      setShowTyping(false);
+      if (err.message?.includes('BLOCK_MINOR')) { setShowMinorWarn(true); }
+      else { setError(err.message); }
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
+    }
+  }
+
   async function sendContextPayload() {
     if (state.loading) return;
     setError(null);
@@ -256,6 +278,16 @@ export default function ChatColumn({ onShowLangWarn }: ChatColumnProps) {
               <button className="animate-btn" onClick={sendAnimateMe}>
                 {ui.animateBtn}
               </button>
+            )}
+            {!config.datingApp && (
+              <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+                <button className="animate-btn" onClick={() => sendQuickMessage('\uD83D\uDC8B', 'Ich sende dir einen Kuss!')} style={{ fontSize: 20, padding: '8px 16px' }}>
+                  {'\uD83D\uDC8B'}
+                </button>
+                <button className="animate-btn" onClick={() => sendQuickMessage('\uD83D\uDC4D', 'Ich mag dich!')} style={{ fontSize: 20, padding: '8px 16px' }}>
+                  {'\uD83D\uDC4D'}
+                </button>
+              </div>
             )}
             {config.datingApp && (
               <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8 }}>

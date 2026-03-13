@@ -128,9 +128,9 @@ export default function TopBar() {
           onClick={() => dispatch({ type: 'CLEAR_CHAT' })}
           title="Clear chat"
           style={{
-            background: 'var(--surface2)', border: '1px solid var(--border)',
-            borderRadius: 6, color: 'var(--text-muted)', fontSize: 11,
-            padding: '4px 10px', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600,
+            background: 'var(--surface2)', border: '2px solid var(--accent)',
+            borderRadius: 6, color: 'var(--accent)', fontSize: 11,
+            padding: '4px 10px', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 800,
             transition: 'all .2s',
           }}
         >

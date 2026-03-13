@@ -37,6 +37,7 @@ export interface Profile {
 
 export interface Message {
   text: string;
+  payloadText?: string;
   type: 'sent' | 'received';
   messageType: string;
   timestamp: string;
