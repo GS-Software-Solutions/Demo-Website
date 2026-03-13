@@ -118,6 +118,7 @@ function reducer(store: Store, action: Action): Store {
     case 'CLEAR_CHAT':
       return {
         ...store,
+        config: { ...config, customerNotes: '', moderatorNotes: '' },
         state: {
           ...state,
           messages: [],
