@@ -19,7 +19,6 @@ const MALE_PICS = [
   '/male-pics/39700326_030_ca59.jpg',
   '/male-pics/66235540_006_4911.jpg',
   '/male-pics/79722577_051_b108.jpg',
-  '/male-pics/92482109_022_1d1e.jpg',
   '/male-pics/99782711_031_95ba.jpg',
 ];
 
