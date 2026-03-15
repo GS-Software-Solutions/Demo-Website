@@ -6099,7 +6099,7 @@ function buildPayload() {
         accountUsername: '216',
         extensionVersion: '1.0.25',
       },
-      ...(CONFIG.extraInfo ? { keywords: [CONFIG.extraInfo] } : {}),
+      ...(CONFIG.extraInfo || CONFIG.datingApp ? { keyword: [...(CONFIG.extraInfo ? [CONFIG.extraInfo] : []), ...(CONFIG.datingApp ? ['Dating App'] : [])] } : {}),
       bypassCache: true,
       siteInfos: {
         ins: state.ins,
