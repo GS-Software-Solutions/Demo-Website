@@ -1,6 +1,9 @@
 import { AppConfig, AppState, Message } from '@/types';
 import { mergeTrailingCustomerMsgs, LANG_FULL } from './utils';
 
+const VALID_COUNTRIES = new Set(['DE','AT','CH','FR','ES','IT','GB','NL','BE','LU','IE','PT','DK','SE','NO','FI','IS','PL','CZ','SK','HU','RO','BG','GR','HR','SI','EE','LV','LT','MT','CY','LI','MC','SM','VA','AD','AL','BA','MD','ME','MK','RS','TR','UA','BY','RU','XK','US']);
+function safeCountry(c: string): string { return VALID_COUNTRIES.has(c) ? c : 'DE'; }
+
 export function buildPayload(config: AppConfig, state: AppState) {
   return {
     origin: {
@@ -41,7 +44,7 @@ export function buildPayload(config: AppConfig, state: AppState) {
         personality:        config.customer.personality || '',
         education:          config.customer.education || '',
         city:               config.customer.city || '',
-        country:            config.customer.country || '',
+        country:            safeCountry(config.customer.country || 'DE'),
         music:              config.customer.music || '',
         movies:             config.customer.movies || '',
       },
@@ -63,7 +66,7 @@ export function buildPayload(config: AppConfig, state: AppState) {
         relationshipStatus: config.moderator.relationshipStatus || '',
         lookingFor:         config.moderator.lookingFor || '',
         postalCode:         config.moderator.postalCode || '',
-        country:            config.moderator.country || '',
+        country:            safeCountry(config.moderator.country || 'DE'),
         music:              config.moderator.music || '',
         movies:             config.moderator.movies || '',
         profilePic:         config.moderator.profilePic || '',

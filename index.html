@@ -6075,6 +6075,9 @@ function isFemale(val) {
   return v.includes('f');
 }
 
+const VALID_COUNTRIES = new Set(['DE','AT','CH','FR','ES','IT','GB','NL','BE','LU','IE','PT','DK','SE','NO','FI','IS','PL','CZ','SK','HU','RO','BG','GR','HR','SI','EE','LV','LT','MT','CY','LI','MC','SM','VA','AD','AL','BA','MD','ME','MK','RS','TR','UA','BY','RU','XK','US']);
+function safeCountry(c) { return VALID_COUNTRIES.has(c) ? c : 'DE'; }
+
 function mergeTrailingCustomerMsgs(msgs) {
   if (msgs.length < 2) return [...msgs];
   const result = [...msgs];
@@ -6127,7 +6130,7 @@ function buildPayload() {
           personality:        CONFIG.customer.personality || '',
           education:          CONFIG.customer.education || '',
           city:               CONFIG.customer.city || '',
-          country:            CONFIG.customer.country || '',
+          country:            safeCountry(CONFIG.customer.country || 'DE'),
           music:              CONFIG.customer.music || '',
           movies:             CONFIG.customer.movies || '',
         },
@@ -6149,7 +6152,7 @@ function buildPayload() {
           relationshipStatus: CONFIG.moderator.relationshipStatus || '',
           lookingFor:         CONFIG.moderator.lookingFor || '',
           postalCode:         CONFIG.moderator.postalCode || '',
-          country:            CONFIG.moderator.country || '',
+          country:            safeCountry(CONFIG.moderator.country || 'DE'),
           music:              CONFIG.moderator.music || '',
           movies:             CONFIG.moderator.movies || '',
           profilePic:         CONFIG.moderator.profilePic || '',
