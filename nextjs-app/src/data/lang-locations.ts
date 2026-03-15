@@ -10,8 +10,8 @@ export const LANG_LOCATIONS: Record<string, Array<{city: string; postalCode: str
   ],
   en: [
     {city:'London',postalCode:'EC1A',country:'GB'},{city:'Manchester',postalCode:'M1',country:'GB'},{city:'New York',postalCode:'10001',country:'US'},
-    {city:'Los Angeles',postalCode:'90001',country:'US'},{city:'Chicago',postalCode:'60601',country:'US'},{city:'Sydney',postalCode:'2000',country:'AU'},
-    {city:'Toronto',postalCode:'M5V',country:'CA'},{city:'Dublin',postalCode:'D01',country:'IE'},{city:'Birmingham',postalCode:'B1',country:'GB'},
+    {city:'Los Angeles',postalCode:'90001',country:'US'},{city:'Chicago',postalCode:'60601',country:'US'},{city:'Dublin',postalCode:'D01',country:'IE'},
+    {city:'Edinburgh',postalCode:'EH1',country:'GB'},{city:'Liverpool',postalCode:'L1',country:'GB'},{city:'Birmingham',postalCode:'B1',country:'GB'},
     {city:'San Francisco',postalCode:'94102',country:'US'},{city:'Austin',postalCode:'73301',country:'US'},{city:'Miami',postalCode:'33101',country:'US'},
   ],
   fr: [

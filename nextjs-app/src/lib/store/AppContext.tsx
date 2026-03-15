@@ -85,8 +85,22 @@ function reducer(store: Store, action: Action): Store {
     case 'SET_MIN_LENGTH':
       return { ...store, config: { ...config, minLength: action.payload } };
 
-    case 'TOGGLE_DATING':
-      return { ...store, config: { ...config, datingApp: !config.datingApp } };
+    case 'TOGGLE_DATING': {
+      const turningOn = !config.datingApp;
+      const DATING_CLEAR_FIELDS = ['occupation', 'hobbies', 'personality', 'lookingFor', 'education', 'bodyType', 'height', 'eyeColor', 'hairColor', 'smoking', 'hasCar', 'housing', 'movies', 'music'] as const;
+      if (turningOn) {
+        const saved: Record<string, any> = {};
+        DATING_CLEAR_FIELDS.forEach(f => { saved[f] = config.customer[f]; });
+        const clearedCustomer = { ...config.customer };
+        DATING_CLEAR_FIELDS.forEach(f => { (clearedCustomer as any)[f] = ''; });
+        return { ...store, config: { ...config, datingApp: true, customer: clearedCustomer, _savedCustomerFields: saved } };
+      } else {
+        const restoredCustomer = config._savedCustomerFields
+          ? { ...config.customer, ...config._savedCustomerFields }
+          : config.customer;
+        return { ...store, config: { ...config, datingApp: false, customer: restoredCustomer, _savedCustomerFields: undefined } };
+      }
+    }
 
     case 'SAVE_DATING_INFO':
       return {

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useApp } from '@/lib/store/AppContext';
 import { getUI } from '@/data/ui-labels';
 import { LANG_LOCATIONS } from '@/data/lang-locations';
@@ -29,6 +30,20 @@ const LANGUAGES: Record<string, string> = {
 export default function TopBar() {
   const { config, state, dispatch } = useApp();
   const ui = getUI(config.sourceLanguage);
+  const [theme, setTheme] = useState('dark');
+
+  useEffect(() => {
+    const saved = localStorage.getItem('theme') || 'dark';
+    setTheme(saved);
+    document.documentElement.setAttribute('data-theme', saved);
+  }, []);
+
+  function toggleTheme() {
+    const next = theme === 'dark' ? 'light' : 'dark';
+    setTheme(next);
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+  }
 
   function handleLanguageChange(code: string) {
     dispatch({ type: 'SET_LANGUAGE', payload: code });
@@ -75,6 +90,10 @@ export default function TopBar() {
       <div className="topbar-logo">
         SexyTalk.io <span>| Demo</span>
       </div>
+
+      <button className="theme-toggle-btn" onClick={toggleTheme} title="Toggle light/dark mode">
+        {theme === 'dark' ? '\u2600\uFE0F' : '\uD83C\uDF19'}
+      </button>
 
       <div className="topbar-divider" />
 

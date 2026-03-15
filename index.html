@@ -1517,8 +1517,8 @@ const LANG_LOCATIONS = {
   ],
   en: [
     {city:'London',postalCode:'EC1A',country:'GB'},{city:'Manchester',postalCode:'M1',country:'GB'},{city:'New York',postalCode:'10001',country:'US'},
-    {city:'Los Angeles',postalCode:'90001',country:'US'},{city:'Chicago',postalCode:'60601',country:'US'},{city:'Sydney',postalCode:'2000',country:'AU'},
-    {city:'Toronto',postalCode:'M5V',country:'CA'},{city:'Dublin',postalCode:'D01',country:'IE'},{city:'Birmingham',postalCode:'B1',country:'GB'},
+    {city:'Los Angeles',postalCode:'90001',country:'US'},{city:'Chicago',postalCode:'60601',country:'US'},{city:'Dublin',postalCode:'D01',country:'IE'},
+    {city:'Edinburgh',postalCode:'EH1',country:'GB'},{city:'Liverpool',postalCode:'L1',country:'GB'},{city:'Birmingham',postalCode:'B1',country:'GB'},
     {city:'San Francisco',postalCode:'94102',country:'US'},{city:'Austin',postalCode:'73301',country:'US'},{city:'Miami',postalCode:'33101',country:'US'},
   ],
   fr: [
@@ -5765,14 +5765,38 @@ function clearChat() {
   localStorage.removeItem('demoState');
   saveToStorage();
 }
+const DATING_CLEAR_FIELDS = ['occupation', 'hobbies', 'personality', 'lookingFor', 'education', 'bodyType', 'height', 'eyeColor', 'hairColor', 'smoking', 'hasCar', 'housing', 'movies', 'music'];
 function toggleDatingPrevInfo(on) {
   const banner = document.getElementById('datingBanner');
   const animBtn = document.getElementById('animateMeBtn');
   const hint = document.getElementById('datingAppHint');
   if (on) {
+    // Save customer fields before clearing
+    CONFIG._savedCustomerFields = {};
+    DATING_CLEAR_FIELDS.forEach(f => { CONFIG._savedCustomerFields[f] = CONFIG.customer[f]; });
+    DATING_CLEAR_FIELDS.forEach(f => { CONFIG.customer[f] = ''; });
+    // Update DOM
+    document.querySelectorAll('[data-field]').forEach(el => {
+      const [obj, key] = el.dataset.field.split('.');
+      if (obj === 'customer' && DATING_CLEAR_FIELDS.includes(key)) {
+        el.innerText = '';
+      }
+    });
     openDatingModal(); banner.classList.add('show');
     animBtn.style.display = 'none'; hint.style.display = '';
   } else {
+    // Restore saved customer fields
+    if (CONFIG._savedCustomerFields) {
+      DATING_CLEAR_FIELDS.forEach(f => { CONFIG.customer[f] = CONFIG._savedCustomerFields[f]; });
+      document.querySelectorAll('[data-field]').forEach(el => {
+        const [obj, key] = el.dataset.field.split('.');
+        if (obj === 'customer' && DATING_CLEAR_FIELDS.includes(key)) {
+          const val = CONFIG._savedCustomerFields[key];
+          el.innerText = typeof val === 'boolean' ? (val ? 'Yes' : 'No') : (val || '');
+        }
+      });
+      CONFIG._savedCustomerFields = null;
+    }
     banner.classList.remove('show');
     CONFIG.datingAppCustomerInfo = ''; CONFIG.datingAppModeratorInfo = ''; CONFIG.datingAppSpamMessage = '';
     updateDatingBanner(); saveToStorage();
@@ -6268,6 +6292,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbo
       CONFIG.datingAppModeratorInfo = savedConfig.datingAppModeratorInfo || '';
       CONFIG.datingAppSpamMessage = savedConfig.datingAppSpamMessage || '';
       CONFIG.extraInfo      = savedConfig.extraInfo      || '';
+      CONFIG._savedCustomerFields = savedConfig._savedCustomerFields || null;
       // Update all [data-field] elements
       document.querySelectorAll('[data-field]').forEach(el => {
         const [obj, key] = el.dataset.field.split('.');

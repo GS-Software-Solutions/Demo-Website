@@ -57,6 +57,7 @@ export interface AppConfig {
   moderatorNotes: string;
   customer: Profile;
   moderator: Profile;
+  _savedCustomerFields?: Partial<Profile>;
 }
 
 export interface AppState {
