@@ -5,6 +5,12 @@ const VALID_COUNTRIES = new Set(['DE','AT','CH','FR','ES','IT','GB','NL','BE','L
 function safeCountry(c: string): string { return VALID_COUNTRIES.has(c) ? c : 'DE'; }
 
 export function buildPayload(config: AppConfig, state: AppState) {
+  const extraVariables: Record<string, any>[] = [];
+
+  if (config.datingAppSpamMessage && config.datingAppSpamMessage.trim()) {
+    extraVariables.push({ spamMessage: config.datingAppSpamMessage.trim() });
+  }
+
   return {
     origin: {
       url: config.datingApp && state.ins <= 3 ? 'https://teddy-sys-mod.de' : 'https://' + config.origin,
@@ -14,7 +20,16 @@ export function buildPayload(config: AppConfig, state: AppState) {
       accountUsername: '216',
       extensionVersion: '1.0.25',
     },
-    ...(config.datingApp && state.ins <= 3 ? { keywords: ['Werbe Profil'] } : config.extraInfo ? { keywords: [config.extraInfo] } : {}),
+    ...(() => {
+      const keywords: string[] = [];
+      if (config.datingApp) keywords.push('Dating App');
+      if (config.datingApp && state.ins <= 3) {
+        keywords.push('Werbe Profil');
+      } else if (config.extraInfo) {
+        keywords.push(config.extraInfo);
+      }
+      return keywords.length ? { keywords } : {};
+    })(),
     bypassCache: true,
     siteInfos: {
       ins: state.ins,
@@ -82,7 +97,7 @@ export function buildPayload(config: AppConfig, state: AppState) {
           : '',
       ].filter(Boolean).join('\n') || '',
       sendToMaestro: false,
-      ...(config.datingApp ? { extraVariables: [{ key: 'Dating App', value: true }] } : {}),
+      ...(extraVariables.length ? { extraVariables } : {}),
       moderatorNotes: [
         config.moderatorNotes.trim(),
         config.datingApp && config.datingAppModeratorInfo?.trim()
@@ -144,7 +159,11 @@ export function parseResponse(data: any): {
   minorDetected: boolean;
   assets: { imageUrl: string; resText: string }[];
 } {
-  const raw = data.translation?.translatedText || data.inferenceCallResponse?.content || data.resText;
+  const useTranslation = !!data.translationNeeded && !!data.translation;
+
+  const raw = useTranslation
+    ? data.translation?.translatedText || null
+    : data.inferenceCallResponse?.content || data.resText;
   const text = raw ? raw.replace(/[-:\u2013\u2014\u2012\u2015]/g, '') : null;
 
   // Check for minor detection: trigger=BLOCK_MINOR or action=BLOCK_REQUEST from checker
@@ -166,11 +185,15 @@ export function parseResponse(data: any): {
           : '[No response text]';
   }
 
-  const summary = data.translation?.translatedSummary || data.summary;
+  const summary = useTranslation ? data.translation?.translatedSummary : data.summary;
   const summaryUser = summary?.user && Object.keys(summary.user).length ? summary.user : null;
   const summaryAssistant = summary?.assistant && Object.keys(summary.assistant).length ? summary.assistant : null;
 
-  const assets: { imageUrl: string; resText: string }[] = (data.inferenceCallResponse?.assetsToSend || [])
+  const assetsSource = useTranslation
+    ? data.translation?.translatedAssetsToSend || []
+    : data.inferenceCallResponse?.assetsToSend || [];
+
+  const assets: { imageUrl: string; resText: string }[] = assetsSource
     .filter((a: any) => a.imageUrl && a.resText)
     .map((a: any) => ({ imageUrl: a.imageUrl, resText: a.resText }));
 
