@@ -1,8 +1,18 @@
 import { AppConfig, AppState, Message } from '@/types';
 import { mergeTrailingCustomerMsgs, LANG_FULL } from './utils';
 
-const VALID_COUNTRIES = new Set(['DE','AT','CH','FR','ES','IT','GB','NL','BE','LU','IE','PT','DK','SE','NO','FI','IS','PL','CZ','SK','HU','RO','BG','GR','HR','SI','EE','LV','LT','MT','CY','LI','MC','SM','VA','AD','AL','BA','MD','ME','MK','RS','TR','UA','BY','RU','XK','US']);
+const VALID_COUNTRIES = new Set(['DE', 'AT', 'CH', 'FR', 'ES', 'IT', 'GB', 'NL', 'BE', 'LU', 'IE', 'PT', 'DK', 'SE', 'NO', 'FI', 'IS', 'PL', 'CZ', 'SK', 'HU', 'RO', 'BG', 'GR', 'HR', 'SI', 'EE', 'LV', 'LT', 'MT', 'CY', 'LI', 'MC', 'SM', 'VA', 'AD', 'AL', 'BA', 'MD', 'ME', 'MK', 'RS', 'TR', 'UA', 'BY', 'RU', 'XK', 'US']);
 function safeCountry(c: string): string { return VALID_COUNTRIES.has(c) ? c : 'DE'; }
+
+// Convert a relative path like /profiles/... to a full URL the vision server can fetch.
+// Leaves already-absolute https:// URLs and data: base64 URLs untouched.
+function toAbsoluteUrl(url: string): string {
+  if (!url) return url;
+  if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) return url;
+  // Relative path — prepend the app's public origin (works in browser only)
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  return origin + url;
+}
 
 export function buildPayload(config: AppConfig, state: AppState) {
   const extraVariables: Record<string, any>[] = [];
@@ -10,6 +20,11 @@ export function buildPayload(config: AppConfig, state: AppState) {
   if (config.datingAppSpamMessage && config.datingAppSpamMessage.trim()) {
     extraVariables.push({ spamMessage: config.datingAppSpamMessage.trim() });
   }
+
+  const modProfilePic = toAbsoluteUrl(config.moderator.profilePic || '');
+  const custProfilePic = config.customer.profilePic && !config.customer.profilePic.startsWith('data:')
+    ? toAbsoluteUrl(config.customer.profilePic)
+    : (config.customer.profilePic || '');
 
   return {
     origin: {
@@ -38,56 +53,58 @@ export function buildPayload(config: AppConfig, state: AppState) {
       messages: mergeTrailingCustomerMsgs(state.messages),
       minLength: config.minLength,
       customerInfo: {
-        age:                config.customer.birthDate?.age || config.customer.age,
-        name:               config.customer.name,
-        gender:             config.customer.gender || 'male',
-        height:             config.customer.height || '',
-        smoking:            config.customer.smoking || '',
-        bodyType:           config.customer.bodyType || '',
-        eyeColor:           config.customer.eyeColor || '',
-        originId:           config.customer.username,
-        username:           config.customer.username,
-        hairColor:          config.customer.hairColor || '',
-        lookingFor:         config.customer.lookingFor || '',
-        occupation:         config.customer.occupation || '',
-        postalCode:         config.customer.postalCode || '',
-        profilePic:         config.customer.profilePic || 'has no profile picture',
-        hasPictures:        config.customer.hasPictures || false,
-        hasProfilePic:      !!config.customer.profilePic,
+        age: config.customer.birthDate?.age || config.customer.age,
+        name: config.customer.name,
+        gender: config.customer.gender || 'male',
+        height: config.customer.height || '',
+        smoking: config.customer.smoking || '',
+        bodyType: config.customer.bodyType || '',
+        eyeColor: config.customer.eyeColor || '',
+        originId: config.customer.username,
+        username: config.customer.username,
+        hairColor: config.customer.hairColor || '',
+        lookingFor: config.customer.lookingFor || '',
+        occupation: config.customer.occupation || '',
+        postalCode: config.customer.postalCode || '',
+        profilePic: custProfilePic || 'has no profile picture',
+        hasPictures: config.customer.hasPictures || false,
+        hasProfilePic: !!config.customer.profilePic,
         relationshipStatus: config.customer.relationshipStatus || '',
-        hobbies:            config.customer.hobbies || '',
-        personality:        config.customer.personality || '',
-        education:          config.customer.education || '',
-        city:               config.customer.city || '',
-        country:            safeCountry(config.customer.country || 'DE'),
-        music:              config.customer.music || '',
-        movies:             config.customer.movies || '',
+        hobbies: config.customer.hobbies || '',
+        personality: config.customer.personality || '',
+        education: config.customer.education || '',
+        city: config.customer.city || '',
+        country: safeCountry(config.customer.country || 'DE'),
+        music: config.customer.music || '',
+        movies: config.customer.movies || '',
       },
       moderatorInfo: {
-        age:                config.moderator.birthDate?.age || config.moderator.age,
-        name:               config.moderator.name,
-        gender:             config.moderator.gender || 'female',
-        originId:           config.moderator.username,
-        username:           config.moderator.username,
-        occupation:         config.moderator.occupation || '',
-        hobbies:            config.moderator.hobbies || '',
-        personality:        config.moderator.personality || '',
-        education:          config.moderator.education || '',
-        bodyType:           config.moderator.bodyType || '',
-        height:             config.moderator.height || '',
-        eyeColor:           config.moderator.eyeColor || '',
-        hairColor:          config.moderator.hairColor || '',
-        smoking:            config.moderator.smoking || '',
+        age: config.moderator.birthDate?.age || config.moderator.age,
+        name: config.moderator.name,
+        gender: config.moderator.gender || 'female',
+        originId: config.moderator.username,
+        username: config.moderator.username,
+        occupation: config.moderator.occupation || '',
+        hobbies: config.moderator.hobbies || '',
+        personality: config.moderator.personality || '',
+        education: config.moderator.education || '',
+        bodyType: config.moderator.bodyType || '',
+        height: config.moderator.height || '',
+        eyeColor: config.moderator.eyeColor || '',
+        hairColor: config.moderator.hairColor || '',
+        smoking: config.moderator.smoking || '',
         relationshipStatus: config.moderator.relationshipStatus || '',
-        lookingFor:         config.moderator.lookingFor || '',
-        postalCode:         config.moderator.postalCode || '',
-        country:            safeCountry(config.moderator.country || 'DE'),
-        music:              config.moderator.music || '',
-        movies:             config.moderator.movies || '',
-        profilePic:         config.moderator.profilePic || '',
-        hasPictures:        config.moderator.hasPictures || false,
-        hasProfilePic:      !!config.moderator.profilePic,
-        privateGallery:     (config.moderator.privateGallery || []).filter(url => !state.sentImages.includes(url)),
+        lookingFor: config.moderator.lookingFor || '',
+        postalCode: config.moderator.postalCode || '',
+        country: safeCountry(config.moderator.country || 'DE'),
+        music: config.moderator.music || '',
+        movies: config.moderator.movies || '',
+        profilePic: modProfilePic,
+        hasPictures: config.moderator.hasPictures || false,
+        hasProfilePic: !!config.moderator.profilePic,
+        privateGallery: (config.moderator.privateGallery || [])
+          .filter(url => !state.sentImages.includes(url))
+          .map(toAbsoluteUrl),
       },
       sessionStart: state.sessionStart,
       customerNotes: [

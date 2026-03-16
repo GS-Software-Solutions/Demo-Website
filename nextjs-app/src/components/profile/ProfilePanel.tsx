@@ -179,14 +179,14 @@ export default function ProfilePanel({ side, onLightbox, onOpenDatingModal, onGe
   async function handleFileChosen(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    const url = URL.createObjectURL(file);
-    dispatch({ type: 'SET_CUSTOMER_PIC', payload: url });
     setAnalyzing(true);
     setGenderResult(null);
 
     const reader = new FileReader();
     reader.onload = async () => {
       const base64 = reader.result as string;
+      // ✅ Store the base64 data URL — blob: URLs are local-only and can't be used by the API
+      dispatch({ type: 'SET_CUSTOMER_PIC', payload: base64 });
       try {
         const res = await fetch('/api/gendercheck', {
           method: 'POST',
